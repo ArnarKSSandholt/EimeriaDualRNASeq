@@ -45,5 +45,5 @@ samples:
       SI-2311-CT34_S1_L002: data/SI-2311/191105_A00605_0082_AHGV3LDRXX/Sample_SI-2311-CT34/SI-2311-CT34_S1_L002_R2_001.fastq.gz
 
 trim_params:
-  adapter: "ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2:keepBothReads"
+  adapter: "ILLUMINACLIP:data/adapters/TruSeq3-PE.fa:2:30:10:2:keepBothReads"
   window: "SLIDINGWINDOW:4:20"
