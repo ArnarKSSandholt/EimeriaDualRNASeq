@@ -4,8 +4,8 @@ configfile: "config.yaml"
 
 rule trim:
     input:
-        r1="data/{experiment}/{exp_meta}/{sample_group}/{sample}_R1_001.fastq.gz",
-        r2="data/{experiment}/{exp_meta}/{sample_group}/{sample}_R2_001.fastq.gz"
+        r1=lambda wildcards: config["samples"][wildcards.experiment]["R1"][wildcards.sample],
+        r2=lambda wildcards: config["samples"][wildcards.experiment]["R2"][wildcards.sample]
     output:
         r1="results/trimmomatic/{experiment}/{sample}_R1_paired.fastq.gz",
         r2="results/trimmomatic/{experiment}/{sample}_R2_paired.fastq.gz",
