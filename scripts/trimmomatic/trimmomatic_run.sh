@@ -15,5 +15,5 @@ module load snakemake
 # Your commands
 source conda_init.sh
 
-snakemake --cores 8 --use-conda results/trimmomatic/SH-2259/SH-2259-11_S5_L001_R1_paired.fastq.gz
-snakemake --cores 8 --use-conda results/trimmomatic/SI-2311/SI-2311-CT11_S1_L001_R1_001.fastq.gz
+snakemake --cores 8 --use-conda --unlock results/trimmomatic/SH-2259/SH-2259-11_S5_L001_R1_paired.fastq.gz
+snakemake --cores 8 --use-conda results/trimmomatic/SI-2311/SI-2311-CT11_S1_L001_R1_paired.fastq.gz
