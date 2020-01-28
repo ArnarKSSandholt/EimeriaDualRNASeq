@@ -18,7 +18,7 @@ rule trim:
       "envs/trimmomatic.yaml"
     threads: 8
     shell:
-        "trimmomatic PE -threads {threads} {input.r1} {input.r2}"
-        "{output.r1} {output.r1_unpaired} {output.r2} {output.r2_unpaired}"
+        "trimmomatic PE -threads {threads} {input.r1} {input.r2} "
+        "{output.r1} {output.r1_unpaired} {output.r2} {output.r2_unpaired} "
         "{params.adapter} {params.window}"
     
