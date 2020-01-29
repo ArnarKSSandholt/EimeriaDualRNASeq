@@ -32,7 +32,7 @@ rule fastqc:
         zip="results/fastqc/{experiment}/{sample}_{read_pair}_fastqc.zip" 
     params: ""
     log:
-        "logs/fastqc/{sample}_{read_pair}.log"
+        "logs/fastqc/{experiment}/{sample}_{read_pair}.log"
     wrapper:
         "0.49.0/bio/fastqc"
 
