@@ -38,7 +38,7 @@ rule fastqc:
 
 rule multiqc:
     input:
-        "results/fastqc/{experiment}"
+        expand("results/fastqc/{experiment}/{sample}_{read_pair}_fastqc.zip", experiment=config["samples"])
     output:
         "results/multiqc/{experiment}/multiqc.html"
     params:
