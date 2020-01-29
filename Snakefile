@@ -17,8 +17,31 @@ rule trim:
     conda:
       "envs/trimmomatic.yaml"
     threads: 8
+    log:
+        "logs/trim/{experiment}/{sample}.log"
     shell:
         "trimmomatic PE -threads {threads} {input.r1} {input.r2} "
         "{output.r1} {output.r1_unpaired} {output.r2} {output.r2_unpaired} "
         "{params.adapter} {params.window}"
-    
+
+rule fastqc:
+    input:
+        "results/trimmomatic/{experiment}/{sample}_{read_pair}_paired.fastq.gz  "
+    output:
+        html="results/fastqc/{experiment}/{sample}_{read_pair}.html",
+        zip="results/fastqc/{experiment}/{sample}_{read_pair}_fastqc.zip" 
+    params: ""
+    log:
+        "logs/fastqc/{sample}_{read_pair}.log"
+    wrapper:
+        "0.49.0/bio/fastqc"
+
+rule multiqc:
+    input:
+        "results/fastqc/{experiment}"
+    output:
+        "results/multiqc/{experiment}/multiqc.html"
+    log:
+        "logs/multiqc/{experiment}.log"
+    wrapper:
+        "0.49.0/bio/multiqc"
