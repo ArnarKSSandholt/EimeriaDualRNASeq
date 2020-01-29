@@ -41,6 +41,8 @@ rule multiqc:
         "results/fastqc/{experiment}"
     output:
         "results/multiqc/{experiment}/multiqc.html"
+    params:
+        ""
     log:
         "logs/multiqc/{experiment}.log"
     wrapper:
