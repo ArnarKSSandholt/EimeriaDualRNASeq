@@ -1,5 +1,15 @@
 # Snakemake pipeline for running a dual RNA-seq analysis on data from an Eimeria infection of chicken cells
 
+from pathlib import Path
+
+def multiqc_path_get(exp_name):
+    fastqc_path_list = []
+    fastqc_path = Path('data/' + exp_name).glob('**/*_fastqc.zip')
+    for path in fastqc_path:
+        fastqc_path_list.append(str(path))
+    return fastqc_path_list
+
+
 configfile: "config.yaml"
 
 rule trim:
@@ -38,7 +48,7 @@ rule fastqc:
 
 rule multiqc:
     input:
-        expand("results/fastqc/{experiment}/{sample}_{read_pair}_fastqc.zip", experiment=config["samples"])
+        multiqc_path_get("{experiment}")
     output:
         "results/multiqc/{experiment}/multiqc.html"
     params:
