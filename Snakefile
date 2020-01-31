@@ -36,7 +36,7 @@ rule trim:
 
 rule fastqc:
     input:
-        "results/trimmomatic/{experiment}/{sample}_{read_pair}_paired.fastq.gz  "
+        "results/trimmomatic/{experiment}/{sample}_{read_pair}_paired.fastq.gz"
     output:
         html="results/fastqc/{experiment}/{sample}_{read_pair}.html",
         zip="results/fastqc/{experiment}/{sample}_{read_pair}_fastqc.zip" 
