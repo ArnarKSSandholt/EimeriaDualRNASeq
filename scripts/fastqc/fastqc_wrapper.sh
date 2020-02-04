@@ -10,6 +10,7 @@
 
 module load bioinfo-tools
 module load FastQC/0.11.8
+module load MultiQC/1.8
 
 # Your commands
 bash scripts/fastqc/fastqc_run.sh results/trimmomatic/in_vitro_pilot
