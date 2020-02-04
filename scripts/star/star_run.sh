@@ -1,4 +1,5 @@
 # Script for running the STAR aligner for a set of read files and reference genomes
+# Usage: bash star_run.sh /Path/to/read/files/folder
 
 GROUP_NAME=$(echo ${1} | cut -d '/' -f 3)
 mkdir -p results/star/mapped_reads/${GROUP_NAME}
