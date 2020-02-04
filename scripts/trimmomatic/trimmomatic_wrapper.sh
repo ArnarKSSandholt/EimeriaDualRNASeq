@@ -9,7 +9,7 @@
 #SBATCH --mail-user arnarkari.sigurearsonsandholt.9531@student.uu.se
 
 module load bioinfo-tools
-module load FastQC/0.11.8
+module load trimmomatic
 
 # Your commands
-bash scripts/fastqc/fastqc_wrapper.sh results/trimmomatic/in_vitro_pilot
+bash scripts/trimmomatic/trimmomatic_run.sh data/in_vitro_pilot/161012_D00457_0163_AC9TWTANXX/Sample_1
