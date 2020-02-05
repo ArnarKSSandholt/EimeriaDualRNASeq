@@ -6,5 +6,5 @@ do
     GROUP_NAME=$(echo ${FILE_PATH} | cut -d '/' -f 3)
     mkdir -p results/fastqc/${GROUP_NAME} 
     fastqc -o results/fastqc/${GROUP_NAME} ${FILE_PATH}/*_paired.fastq.gz
-    multiqc results/fastqc/${GROUP_NAME}
+    multiqc -o results/fastqc/${GROUP_NAME} results/fastqc/${GROUP_NAME}
 done
