@@ -4,4 +4,4 @@
 mkdir -p results/star/index
 
 STAR --runMode genomeGenerate --genomeDir results/star/index --genomeFastaFiles ${1} --sjdbGTFtagExonParentTranscript Parent \
-	--runThreadN 8 --sjdbGTFfile ${2} --sjdbOverhang 150 --genomeChrBinNbits 18
+	--sjdbGTFtagExonParentGene gene --runThreadN 8 --sjdbGTFfile ${2} --sjdbOverhang 150 --genomeChrBinNbits 18
