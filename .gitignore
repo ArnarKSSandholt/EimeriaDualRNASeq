@@ -1,2 +1,20 @@
 
 notes/
+
+data/SI-2311/191105_A00605_0082_AHGV3LDRXX/Sample_SI-2311-CT11/
+
+scripts/trimmomatic/trimmomatic_run_local.sh
+
+scripts/star/star_index_local.sh
+
+scripts/star/star_run_local.sh
+
+data/adapters/
+
+data/reference/
+
+results/trimmomatic/SI-2311/
+
+results/fastqc/SI-2311/
+
+results/star/reference_merge/
