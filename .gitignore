@@ -18,3 +18,5 @@ results/trimmomatic/SI-2311/
 results/fastqc/SI-2311/
 
 results/star/reference_merge/
+
+results/star/merged_reference/

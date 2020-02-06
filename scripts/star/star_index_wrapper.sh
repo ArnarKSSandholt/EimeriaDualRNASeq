@@ -12,4 +12,4 @@ module load bioinfo-tools
 module load star/2.7.2b
 
 # Your commands
-bash scripts/star/star_index.sh results/star/reference_merge/eimeria_chicken_merge.fna results/star/reference_merge/eimeria_chicken_merge.gff
+bash scripts/star/star_index.sh results/star/merged_reference/eimeria_chicken_merge.fna results/star/merged_reference/eimeria_chicken_merge.gff
