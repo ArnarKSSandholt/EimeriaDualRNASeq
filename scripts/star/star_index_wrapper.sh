@@ -4,7 +4,7 @@
 #SBATCH -p core
 #SBATCH -n 8
 #SBATCH -t 1:00:00
-#SBATCH -J trimmomatic_run
+#SBATCH -J star_index
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user arnarkari.sigurearsonsandholt.9531@student.uu.se
 
