@@ -6,11 +6,11 @@ mkdir -p results/star/mapped_reads/${GROUP_NAME}
 
 for f in $(ls ${1}/*_paired.fastq.gz | sed 's/_R._paired.fastq.gz//' | sort -u)
 do
-    STAR --genomeDir results/star/index --readFilesIn ${1}/${f}_R1_paired.fastq.gz ${1}/${f}_R2_paired.fastq.gz --readFilesCommand gunzip -c \
+    STAR --genomeDir /proj/snic2020-16-20/EimeriaDualRNASeq/results/star/index --readFilesIn ${1}/${f}_R1_paired.fastq.gz ${1}/${f}_R2_paired.fastq.gz --readFilesCommand gunzip -c \
 		--runThreadN 8 --outFileNamePrefix results/star/mapped_reads/${GROUP_NAME}/${f}_ --quantMode GeneCounts --outSAMtype BAM SortedByCoordinate
-    STAR --genomeDir results/star/index --readFilesIn ${1}/${f}_R1_unpaired.fastq.gz --readFilesCommand gunzip -c \
+    STAR --genomeDir /proj/snic2020-16-20/EimeriaDualRNASeq/results/star/index --readFilesIn ${1}/${f}_R1_unpaired.fastq.gz --readFilesCommand gunzip -c \
 		--runThreadN 8 --outFileNamePrefix results/star/mapped_reads/${GROUP_NAME}/${f}_R1_unpaired_ --quantMode GeneCounts --outSAMtype BAM SortedByCoordinate
-    STAR --genomeDir results/star/index --readFilesIn ${1}/${f}_R2_unpaired.fastq.gz --readFilesCommand gunzip -c \
+    STAR --genomeDir /proj/snic2020-16-20/EimeriaDualRNASeq/results/star/index --readFilesIn ${1}/${f}_R2_unpaired.fastq.gz --readFilesCommand gunzip -c \
 		--runThreadN 8 --outFileNamePrefix results/star/mapped_reads/${GROUP_NAME}/${f}_R2_unpaired_ --quantMode GeneCounts --outSAMtype BAM SortedByCoordinate
 done
 
