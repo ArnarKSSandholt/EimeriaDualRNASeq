@@ -15,6 +15,7 @@ do
         results/trimmomatic/${GROUP_NAME}/${f}_R2_paired.fastq.gz \
         results/trimmomatic/${GROUP_NAME}/${f}_R2_unpaired.fastq.gz \
         ILLUMINACLIP:data/adapters/TruSeq3-PE.fa:2:30:10:2:keepBothReads \
-        SLIDINGWINDOW:4:20
+        SLIDINGWINDOW:4:20 \
+        MINLEN:50
     done
 done
