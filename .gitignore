@@ -22,3 +22,11 @@ results/star/reference_merge/
 results/star/merged_reference/
 
 data/reference_genomes/
+
+results/fastqc_test/SI-2311/
+
+results/fastqc/in_vitro_complementary/multiqc_report.html
+
+results/fastqc/in_vitro_pilot/multiqc_report.html
+
+results/fastqc/SH-2259/multiqc_report.html

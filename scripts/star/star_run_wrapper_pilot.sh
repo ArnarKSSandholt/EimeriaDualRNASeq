@@ -3,8 +3,8 @@
 #SBATCH -A snic2020-15-16
 #SBATCH -p core
 #SBATCH -n 8
-#SBATCH -t 1:00:00
-#SBATCH -J star_run
+#SBATCH -t 48:00:00
+#SBATCH -J star_run_pilot
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user arnarkari.sigurearsonsandholt.9531@student.uu.se
 
