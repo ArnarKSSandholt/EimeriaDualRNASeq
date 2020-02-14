@@ -2,7 +2,7 @@
 # Usage: bash htseq_nostrand_run.sh /Path/to/mapped/read/file/folder
 
 GROUP_NAME=$(echo ${1} | cut -d '/' -f 4)
-mkdir -p results/htseq/${GROUP_NAME}
+mkdir -p results/htseq/nostranded/${GROUP_NAME}
 
 for f in $(ls ${1}/*.bam | sed 's/_Aligned.sortedByCoord.out.bam//' | sort -u)
 do
