@@ -2,7 +2,7 @@
 # Usage: bash htseq_strand_run.sh /Path/to/mapped/read/file/folder
 
 GROUP_NAME=$(echo ${1} | cut -d '/' -f 4)
-mkdir -p results/htseq/${GROUP_NAME}
+mkdir -p results/htseq/reverse/${GROUP_NAME}
 
 for f in $(ls ${1}/*.bam | sed 's/_Aligned.sortedByCoord.out.bam//' | sort -u)
 do
