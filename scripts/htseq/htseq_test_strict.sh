@@ -2,11 +2,11 @@
 # Usage: bash htseq_reverse_run.sh /Path/to/mapped/read/file/folder
 
 GROUP_NAME=$(echo ${1} | cut -d '/' -f 4)
-mkdir -p results/htseq/reverse/${GROUP_NAME}
+mkdir -p results/htseq/test/${GROUP_NAME}
 
 for f in $(ls ${1}/*.bam | sed 's/_Aligned.sortedByCoord.out.bam//' | sort -u)
 do
     OUTPUT_NAME=$(echo ${f} | rev | cut -d '/' -f 1 | rev)
-    htseq-count -f bam -r pos -s reverse -i Parent ${f}_Aligned.sortedByCoord.out.bam results/star/merged_reference/eimeria_chicken_merge.gff \
-        > results/htseq/reverse/${GROUP_NAME}/${OUTPUT_NAME}_stranded.counts
+    htseq-count -f bam -r pos -s reverse -i Parent -m intersection-strict ${f}_Aligned.sortedByCoord.out.bam results/star/merged_reference/eimeria_chicken_merge.gff \
+        > results/htseq/test/${GROUP_NAME}/${OUTPUT_NAME}_test-strict.counts
 done
