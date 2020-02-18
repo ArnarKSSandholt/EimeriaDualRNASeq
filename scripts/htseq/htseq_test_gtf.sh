@@ -7,6 +7,6 @@ mkdir -p results/htseq/test/${GROUP_NAME}
 for f in $(ls ${1}/*.bam | sed 's/_Aligned.sortedByCoord.out.bam//' | sort -u)
 do
     OUTPUT_NAME=$(echo ${f} | rev | cut -d '/' -f 1 | rev)
-    htseq-count -f bam -r pos -i gene_name -s reverse ${f}_Aligned.sortedByCoord.out.bam results/star/merged_reference/eimeria_chicken_merge.gtf \
+    htseq-count -f bam -r pos -i gene_name -s reverse ${f}_Aligned.sortedByCoord.out.bam results/star/merged_reference/eimeria_chicken_merge_gene_id.gtf \
         > results/htseq/test/${GROUP_NAME}/${OUTPUT_NAME}_gtf.counts
 done
