@@ -51,6 +51,7 @@ while i < len(read_count_filenames):
 
 header_list = ["File_name","Total_number_of_mapped_reads", "Number_of_reads_mapped_to_chicken", "Number_of_reads_mapped_to_Eimeria", "Percentage_of_Eimeria_reads"]
 data_list = [filenames, total_read_num_sum, chicken_read_num, eimeria_read_num, eimeria_read_perc]
+print(data_list)
 data_table = pd.DataFrame(data_list, columns=header_list)
 out_table = pd.merge(metadata_table,data_table, on = "File_name")
 out_table.to_csv(output_path+"/metadata_table.csv", sep = ",", index = False)
