@@ -14,7 +14,7 @@ output_path = sys.argv[3]
 
 read_count_filenames = listdir(read_count_path)
 read_count_filenames.sort()
-metadata_table = pd.read_table(metadata_path)
+metadata_table = pd.read_table(metadata_path, sep="\t")
 metadata_table = metadata_table.sort_values("File_name")
 total_read_num_sum = []
 eimeria_read_num = []
@@ -26,12 +26,13 @@ old_name = ""
 i = 0
 j = 0
 while i < len(read_count_filenames):
+    print(read_count_filenames[i])
     l_pos = re.search("L00", read_count_filenames[i]).start()
     curr_name = read_count_filenames[i][0:l_pos-1]
     if curr_name != old_name:
-        sum_table = pd.read_table(read_count_path+"/"+read_count_filenames[i], header=None, names=["gene_name","gene_count"], index_col=0)
+        sum_table = pd.read_csv(read_count_path+"/"+read_count_filenames[i], sep="\t", header=None, names=["gene_name","gene_count"], index_col=0)
     else:
-        temp_table = pd.read_table(read_count_path+"/"+read_count_filenames[i], header=None, names=["gene_name","gene_count"], index_col=0)
+        temp_table = pd.read_table(read_count_path+"/"+read_count_filenames[i], sep="\t", header=None, names=["gene_name","gene_count"], index_col=0)
         sum_table += temp_table
         if i+1 == len(read_count_filenames) or not re.search(curr_name, read_count_filenames[i+1]):
             stat_table = sum_table.iloc[-5:]
