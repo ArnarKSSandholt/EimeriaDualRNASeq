@@ -42,9 +42,9 @@ while i < len(read_count_filenames):
             chicken_read_num.append(sum(chicken_table.gene_count))
             eimeria_read_perc.append(eimeria_read_num[j]/total_read_num_sum[j])
             filenames.append(curr_name)
-            stat_table.to_csv(output_path+"/"+curr_name+"_stat_table.csv", sep = ",", index = False)
-            eimeria_table.to_csv(output_path+"/"+curr_name+"_eimeria_table.csv", sep = ",", index = False)
-            chicken_table.to_csv(output_path+"/"+curr_name+"_chicken_table.csv", sep = ",", index = False)
+            stat_table.to_csv(output_path+"/"+curr_name+"_stat_table.csv", sep = ",")
+            eimeria_table.to_csv(output_path+"/"+curr_name+"_eimeria_table.csv", sep = ",")
+            chicken_table.to_csv(output_path+"/"+curr_name+"_chicken_table.csv", sep = ",")
             j += 1
     old_name = curr_name
     i += 1
