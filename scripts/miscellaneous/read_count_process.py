@@ -12,7 +12,7 @@ metadata_path = sys.argv[1]
 read_count_path = sys.argv[2]
 output_path = sys.argv[3]
 
-read_count_filenames = listdir(metadata_path)
+read_count_filenames = listdir(read_count_path)
 read_count_filenames.sort()
 metadata_table = pd.read_table(metadata_path)
 metadata_table = metadata_table.sort_values("File_name")
