@@ -12,5 +12,4 @@ module load bioinfo-tools
 module load htseq/0.9.1
 
 # Your commands
-bash scripts/htseq/htseq_test_nonempty.sh results/star/mapped_reads/in_vitro_pilot
-bash scripts/htseq/htseq_test_strict.sh results/star/mapped_reads/in_vitro_pilot
+bash scripts/htseq/htseq_test_gtf.sh results/star/mapped_reads/in_vitro_pilot

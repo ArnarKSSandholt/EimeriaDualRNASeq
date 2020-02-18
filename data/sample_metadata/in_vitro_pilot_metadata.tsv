@@ -1,4 +1,4 @@
-File_name	Infection_status	Timepoint_days	Sample_date
+File_name	Infection_status	Timepoint_hours	Sample_date
 1_S17_L002	Uninfected	4	NA
 2_S18_L002	Infexted	4	NA
 3_S19_L002	Uninfected	24	NA
