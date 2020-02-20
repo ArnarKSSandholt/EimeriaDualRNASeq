@@ -52,6 +52,4 @@ header_list = ["File_name","Total_number_of_mapped_reads", "Number_of_reads_mapp
     "Percentage_of_Eimeria_reads", "Number_of_read_not_mapped_to_feature", "Number_of_reads_mapped_to_multiple_features"]
 data_table = pd.DataFrame(result_list, columns=header_list)
 out_table = pd.merge(metadata_table, data_table, on = "File_name")
-print(metadata_table)
-print(out_table)
 out_table.to_csv(output_path+"/metadata_table.csv", sep = ",", index = False)
