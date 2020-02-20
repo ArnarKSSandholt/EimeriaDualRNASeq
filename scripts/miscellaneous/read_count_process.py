@@ -37,7 +37,7 @@ while i < len(read_count_filenames):
                 total_read_num_sum = sum(sum_table.gene_count.iloc[:-5])
                 eimeria_read_num = sum(eimeria_table.gene_count)
                 chicken_read_num = sum(chicken_table.gene_count)
-                eimeria_read_perc = eimeria_read_num[j]/total_read_num_sum[j]
+                eimeria_read_perc = eimeria_read_num/total_read_num_sum
                 result_list.append([curr_name, total_read_num_sum, eimeria_read_num, chicken_read_num, eimeria_read_perc])
                 stat_table.to_csv(output_path+"/"+curr_name+"_stat_table.csv", sep = ",")
                 eimeria_table.to_csv(output_path+"/"+curr_name+"_eimeria_table.csv", sep = ",")
