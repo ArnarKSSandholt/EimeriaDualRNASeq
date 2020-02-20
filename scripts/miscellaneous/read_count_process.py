@@ -16,11 +16,7 @@ read_count_filenames = listdir(read_count_path)
 read_count_filenames.sort()
 metadata_table = pd.read_csv(metadata_path, sep="\t")
 metadata_table = metadata_table.sort_values("File_name")
-total_read_num_sum = []
-eimeria_read_num = []
-chicken_read_num = []
-eimeria_read_perc = []
-filenames = []
+result_list = []
 old_name = ""
 
 i = 0
@@ -38,11 +34,11 @@ while i < len(read_count_filenames):
                 stat_table = sum_table.iloc[-5:]
                 eimeria_table = sum_table.iloc[-8660:-5]
                 chicken_table = sum_table.iloc[:-8660]
-                total_read_num_sum.append(sum(sum_table.gene_count.iloc[:-5]))
-                eimeria_read_num.append(sum(eimeria_table.gene_count))
-                chicken_read_num.append(sum(chicken_table.gene_count))
-                eimeria_read_perc.append(eimeria_read_num[j]/total_read_num_sum[j])
-                filenames.append(curr_name)
+                total_read_num_sum = sum(sum_table.gene_count.iloc[:-5])
+                eimeria_read_num = sum(eimeria_table.gene_count)
+                chicken_read_num = sum(chicken_table.gene_count)
+                eimeria_read_perc = eimeria_read_num[j]/total_read_num_sum[j]
+                result_list.append([curr_name, total_read_num_sum, eimeria_read_num, chicken_read_num, eimeria_read_perc])
                 stat_table.to_csv(output_path+"/"+curr_name+"_stat_table.csv", sep = ",")
                 eimeria_table.to_csv(output_path+"/"+curr_name+"_eimeria_table.csv", sep = ",")
                 chicken_table.to_csv(output_path+"/"+curr_name+"_chicken_table.csv", sep = ",")
@@ -51,8 +47,6 @@ while i < len(read_count_filenames):
     i += 1
 
 header_list = ["File_name","Total_number_of_mapped_reads", "Number_of_reads_mapped_to_chicken", "Number_of_reads_mapped_to_Eimeria", "Percentage_of_Eimeria_reads"]
-data_list = [filenames, total_read_num_sum, chicken_read_num, eimeria_read_num, eimeria_read_perc]
-print(data_list)
-data_table = pd.DataFrame(data_list, columns=header_list)
+data_table = pd.DataFrame(result_list, columns=header_list)
 out_table = pd.merge(metadata_table,data_table, on = "File_name")
 out_table.to_csv(output_path+"/metadata_table.csv", sep = ",", index = False)
