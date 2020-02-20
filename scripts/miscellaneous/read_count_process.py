@@ -41,7 +41,6 @@ while i < len(read_count_filenames):
                 no_feature_num = stat_table.gene_count.iloc[0]
                 ambiguous_num = stat_table.gene_count.iloc[1]
                 result_list.append([curr_name, total_read_num_sum, chicken_read_num, eimeria_read_num, eimeria_read_perc, no_feature_num, ambiguous_num])
-                print(result_list)
                 stat_table.to_csv(output_path+"/"+curr_name+"_stat_table.csv", sep = ",")
                 eimeria_table.to_csv(output_path+"/"+curr_name+"_eimeria_table.csv", sep = ",")
                 chicken_table.to_csv(output_path+"/"+curr_name+"_chicken_table.csv", sep = ",")
@@ -52,5 +51,6 @@ while i < len(read_count_filenames):
 header_list = ["File_name","Total_number_of_mapped_reads", "Number_of_reads_mapped_to_chicken", "Number_of_reads_mapped_to_Eimeria", \
     "Percentage_of_Eimeria_reads", "Number_of_read_not_mapped_to_feature", "Number_of_reads_mapped_to_multiple_features"]
 data_table = pd.DataFrame(result_list, columns=header_list)
+print(data_table)
 out_table = pd.merge(metadata_table,data_table, on = "File_name")
 out_table.to_csv(output_path+"/metadata_table.csv", sep = ",", index = False)
