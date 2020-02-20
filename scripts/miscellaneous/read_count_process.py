@@ -37,7 +37,7 @@ while i < len(read_count_filenames):
                 total_read_num_sum = sum(sum_table.gene_count.iloc[:-5])
                 eimeria_read_num = sum(eimeria_table.gene_count)
                 chicken_read_num = sum(chicken_table.gene_count)
-                eimeria_read_perc = eimeria_read_num/total_read_num_sum
+                eimeria_read_perc = eimeria_read_num/total_read_num_sum * 100
                 no_feature_num = stat_table.gene_count.iloc[0]
                 ambiguous_num = stat_table.gene_count.iloc[1]
                 result_list.append([curr_name, total_read_num_sum, chicken_read_num, eimeria_read_num, eimeria_read_perc, no_feature_num, ambiguous_num])
