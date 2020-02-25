@@ -30,3 +30,12 @@ results/fastqc/in_vitro_complementary/multiqc_report.html
 results/fastqc/in_vitro_pilot/multiqc_report.html
 
 results/fastqc/SH-2259/multiqc_report.html
+.Rproj.user
+
+results/htseq/reverse/in_vitro_complementary/processed_reads/
+
+results/htseq/reverse/in_vitro_pilot/processed_reads/
+
+results/htseq/reverse/SI-2311/processed_reads/
+
+results/htseq/reverse/SH-2259/processed_reads/
