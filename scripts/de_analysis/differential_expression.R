@@ -2,6 +2,7 @@
 
 library(edgeR)
 
+# Specify the files with the count data, the path to them and the labels
 pilot_chicken_files <- c("1_S17_chicken_table.csv","2_S18_chicken_table.csv","3_S19_chicken_table.csv","4_S20_chicken_table.csv",
                          "5_S21_chicken_table.csv","6_S22_chicken_table.csv","7_S23_chicken_table.csv","8_S24_chicken_table.csv",
                          "9_S25_chicken_table.csv","10_S26_chicken_table.csv")
@@ -11,5 +12,19 @@ pilot_eimeria_files <- c("1_S17_eimeria_table.csv","2_S18_eimeria_table.csv","3_
 path_to_files <- "results/htseq/reverse/in_vitro_pilot/processed_reads"
 sample_labels <- c("1_S17","2_S18","3_S19","4_S20","5_S21","6_S22","7_S23","8_S24","9_S25","10_S26")
 
-pilot_chicken_merge <- readDGE(pilot_chicken_files, path = path_to_files, labels = sample_labels, sep = ",")
-pilot_eimeria_merge <- readDGE(pilot_eimeria_files, path = path_to_files, labels = sample_labels, sep = ",")
+# Create the DGElist object containing the count data in a format that edgeR can work with
+pilot_chicken_dgelist <- readDGE(pilot_chicken_files, path = path_to_files, labels = sample_labels, sep = ",")
+pilot_eimeria_dgelist <- readDGE(pilot_eimeria_files, path = path_to_files, labels = sample_labels, sep = ",")
+
+# Filter out genes that are lowly expressed in all samples
+keep_chicken <- filterByExpr(pilot_chicken_dgelist)
+keep_eimeria <- filterByExpr(pilot_eimeria_dgelist)
+pilot_chicken_dgelist <- pilot_chicken_dgelist[keep_chicken, , keep_chicken.lib.sizes=FALSE]
+pilot_eimeria_dgelist <- pilot_eimeria_dgelist[keep_eimeria, , keep_eimeria.lib.sizes=FALSE]
+
+# Define the design parameters, here infection status (I=Infected, U=Uninfected) and time since infection
+infection_status <- c("U","I","U","I","U","I","U","I","U","I")
+timepoint <- c("4","4","24","24","2","2","4","4","24","24")
+data.frame(Sample=colnames(pilot_chicken_dgelist),infection_status,timepoint)
+design <- model.matrix(~0+infection_status+timepoint) # TODO: Check why timepoint "2" doesn't show up
+rownames(design) <- colnames(pilot_chicken_dgelist)
