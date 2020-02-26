@@ -4,13 +4,16 @@
 
 import pandas as pd
 import numpy as np
-from os import listdir
+from os import listdir, mkdir
 import sys
 import re
 
 metadata_path = sys.argv[1]
 read_count_path = sys.argv[2]
 output_path = sys.argv[3]
+mkdir(output_path+"/chicken")
+mkdir(output_path+"/eimeria")
+mkdir(output_path+"/stats")
 
 read_count_filenames = listdir(read_count_path)
 read_count_filenames.sort()
