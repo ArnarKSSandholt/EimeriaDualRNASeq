@@ -41,9 +41,9 @@ while i < len(read_count_filenames):
                 no_feature_num = stat_table.gene_count.iloc[0]
                 ambiguous_num = stat_table.gene_count.iloc[1]
                 result_list.append([curr_name, total_read_num_sum, chicken_read_num, eimeria_read_num, eimeria_read_perc, no_feature_num, ambiguous_num])
-                stat_table.to_csv(output_path+"/"+curr_name+"_stat_table.csv", sep = ",")
-                eimeria_table.to_csv(output_path+"/"+curr_name+"_eimeria_table.csv", sep = ",")
-                chicken_table.to_csv(output_path+"/"+curr_name+"_chicken_table.csv", sep = ",")
+                stat_table.to_csv(output_path+"/stats/"+curr_name+"_stat_table.csv", sep = ",")
+                eimeria_table.to_csv(output_path+"/eimeria/"+curr_name+"_eimeria_table.csv", sep = ",")
+                chicken_table.to_csv(output_path+"/chicken/"+curr_name+"_chicken_table.csv", sep = ",")
                 j += 1
         old_name = curr_name
     i += 1
