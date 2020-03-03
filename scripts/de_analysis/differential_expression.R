@@ -2,6 +2,7 @@
 
 library(edgeR)
 library(EnhancedVolcano)
+library(org.Gg.eg.db)
 
 # Specify the files with the count data, the path to them and the labels
 chicken_files <- c("1_S17_chicken_table.csv","2_S18_chicken_table.csv","3_S19_chicken_table.csv","4_S20_chicken_table.csv",
@@ -47,6 +48,25 @@ group_chicken <- factor(paste(infection_status,timepoint_chicken,sep="."))
 chicken_dgelist <- readDGE(chicken_files, path = path_to_chicken_files, labels = chicken_labels, group = group_chicken, sep = ",")
 eimeria_dgelist <- readDGE(eimeria_files, path = path_to_eimeria_files, labels = eimeria_labels, group = timepoint_eimeria, sep = ",")
 
+# Add annotation information for the chicken data
+pre_gene_list <- rownames(chicken_dgelist$counts)
+gene_list <- sapply(pre_gene_list, function(x) substr(x, 6, nchar(x)))
+
+idfound <- gene_list %in% mappedRkeys(org.Gg.egSYMBOL)
+gene_list <- gene_list[idfound]
+
+egSYMBOL <- toTable(org.Gg.egSYMBOL)
+
+m <- match(gene_list, egSYMBOL$symbol)
+
+entrez_geneIDs <- egSYMBOL$gene_id[m]
+annotation_df <- data.frame(gene_list, egSYMBOL$gene_id[m])
+colnames(annotation_df) <- c("Symbol","EntrezGene")
+
+#Add the annotation information to the chicken_dgelist and filter out the genes that lacked annotation
+#chicken_dgelist$genes <- annotation_df
+chicken_dgelist <- chicken_dgelist[idfound,]
+
 # Filter out genes that are lowly expressed in all samples
 keep_chicken <- filterByExpr(chicken_dgelist)
 keep_eimeria <- filterByExpr(eimeria_dgelist)
@@ -61,15 +81,22 @@ eimeria_dgelist_filt$samples$lib.size <- colSums(eimeria_dgelist_filt$counts)
 chicken_dgelist_filt_norm <- calcNormFactors(chicken_dgelist_filt)
 eimeria_dgelist_filt_norm <- calcNormFactors(eimeria_dgelist_filt)
 
+pre_gene_list <- rownames(chicken_dgelist_filt_norm$counts)
+gene_list <- sapply(pre_gene_list, function(x) substr(x, 6, nchar(x)))
+
+m <- match(gene_list, egSYMBOL$symbol)
+
+entrez_geneIDs <- egSYMBOL$gene_id[m]
+
 # Check MDS plots for outliers or other potential issues
-plotMDS(chicken_dgelist_filt_norm)
+plotMDS(chicken_dgelist_filt_norm_genefilt)
 plotMDS(eimeria_dgelist_filt_norm)
 
-# TODO: The chicken analysis design
+# The chicken analysis design
 chicken_dgelist_filt_norm$samples$group <- relevel(chicken_dgelist_filt_norm$samples$group, ref="U.0")
 design_chicken <- model.matrix(~group, data = chicken_dgelist_filt_norm$samples)
 #design_chicken <- model.matrix(~infection_status+timepoint_chicken)
-rownames(design_chicken) <- colnames(chicken_dgelist)
+rownames(design_chicken) <- colnames(chicken_dgelist_filt_norm)
 
 # Define the design of the eimeria analysis
 design_eimeria <- model.matrix(~timepoint_eimeria)
@@ -107,7 +134,7 @@ qlf_eimeria_4 <- glmQLFTest(fit_eimeria, coef = 5)
 qlf_eimeria_48 <- glmQLFTest(fit_eimeria, coef = 6)
 qlf_eimeria_72 <- glmQLFTest(fit_eimeria, coef = 7)
 qlf_eimeria_all <- glmQLFTest(fit_eimeria, coef = 2:7)
-qlf_eimeria_batch <- glmQLFTest(fit_eimeria, coef = 8:14)
+#qlf_eimeria_batch <- glmQLFTest(fit_eimeria, coef = 8:14)
 
 # Volcano plots for all comparisons
 EnhancedVolcano(qlf_chicken_UI.2$table,
@@ -141,11 +168,6 @@ EnhancedVolcano(qlf_chicken_UI.72$table,
                 x = 'logFC',
                 y = 'PValue')
 
-EnhancedVolcano(qlf_eimeria_72$table,
-                lab = rownames(qlf_eimeria_72$table),
-                title = 'Eimeria in vitro 72h',
-                x = 'logFC',
-                y = 'PValue')
 EnhancedVolcano(qlf_eimeria_2$table,
                 lab = rownames(qlf_eimeria_2$table),
                 title = 'Eimeria in vitro 2h',
@@ -161,16 +183,46 @@ EnhancedVolcano(qlf_eimeria_12$table,
                 title = 'Eimeria in vitro 12h',
                 x = 'logFC',
                 y = 'PValue')
-EnhancedVolcano(qlf_eimeria_48$table,
-                lab = rownames(qlf_eimeria_48$table),
-                title = 'Eimeria in vitro 48h',
-                x = 'logFC',
-                y = 'PValue')
 EnhancedVolcano(qlf_eimeria_24$table,
                 lab = rownames(qlf_eimeria_24$table),
                 title = 'Eimeria in vitro 24h',
                 x = 'logFC',
                 y = 'PValue')
+EnhancedVolcano(qlf_eimeria_48$table,
+                lab = rownames(qlf_eimeria_48$table),
+                title = 'Eimeria in vitro 48h',
+                x = 'logFC',
+                y = 'PValue')
+EnhancedVolcano(qlf_eimeria_72$table,
+                lab = rownames(qlf_eimeria_72$table),
+                title = 'Eimeria in vitro 72h',
+                x = 'logFC',
+                y = 'PValue')
+  
+go_chicken_UI.2 <- goana(qlf_chicken_UI.2, geneid = entrez_geneIDs, FDR = 0.05, species = "Gg", species.KEGG = "gga")
+go_chicken_UI.4 <- goana(qlf_chicken_UI.4, geneid = entrez_geneIDs, FDR = 0.05, species = "Gg", species.KEGG = "gga")
+go_chicken_UI.12 <- goana(qlf_chicken_UI.12, geneid = entrez_geneIDs, FDR = 0.05, species = "Gg", species.KEGG = "gga")
+go_chicken_UI.24 <- goana(qlf_chicken_UI.24, geneid = entrez_geneIDs, FDR = 0.05, species = "Gg", species.KEGG = "gga")
+go_chicken_UI.48 <- goana(qlf_chicken_UI.48, geneid = entrez_geneIDs, FDR = 0.05, species = "Gg", species.KEGG = "gga")
+go_chicken_UI.72 <- goana(qlf_chicken_UI.72, geneid = entrez_geneIDs, FDR = 0.05, species = "Gg", species.KEGG = "gga")
+
+topgo_chicken_UI.2_up <- topGO(go_chicken_UI.2, ont="BP", sort="Up", n=30, truncate=30)
+topgo_chicken_UI.4_up <- topGO(go_chicken_UI.4, ont="BP", sort="Up", n=30, truncate=30)
+topgo_chicken_UI.12_up <- topGO(go_chicken_UI.12, ont="BP", sort="Up", n=30, truncate=30)
+topgo_chicken_UI.24_up <- topGO(go_chicken_UI.24, ont="BP", sort="Up", n=30, truncate=30)
+topgo_chicken_UI.48_up <- topGO(go_chicken_UI.48, ont="BP", sort="Up", n=30, truncate=30)
+topgo_chicken_UI.72_up <- topGO(go_chicken_UI.72, ont="BP", sort="Up", n=30, truncate=30)
+
+topgo_chicken_UI.2_down <- topGO(go_chicken_UI.2, ont="BP", sort="Down", n=30, truncate=30)
+topgo_chicken_UI.4_down <- topGO(go_chicken_UI.4, ont="BP", sort="Down", n=30, truncate=30)
+topgo_chicken_UI.12_down <- topGO(go_chicken_UI.12, ont="BP", sort="Down", n=30, truncate=30)
+topgo_chicken_UI.24_down <- topGO(go_chicken_UI.24, ont="BP", sort="Down", n=30, truncate=30)
+topgo_chicken_UI.48_down <- topGO(go_chicken_UI.48, ont="BP", sort="Down", n=30, truncate=30)
+topgo_chicken_UI.72_down <- topGO(go_chicken_UI.72, ont="BP", sort="Down", n=30, truncate=30)
+
+
+
+
 
 
 
