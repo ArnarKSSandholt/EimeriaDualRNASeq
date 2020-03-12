@@ -1,9 +1,8 @@
 # Script that processes the read count data from htseq-count and splits the read counts by source as well
-# as computing statistics about them, such as how lareg a fraction of the mapped reads map to the parasite
+# as computing statistics about them, such as how large a fraction of the mapped reads map to the parasite
 # Usage: python read_count_process.py /Path/to/metadata/file.tsv /Path/to/read/count/folder /Path/to/output/folder
 
 import pandas as pd
-import numpy as np
 from os import listdir, mkdir
 import sys
 import re
