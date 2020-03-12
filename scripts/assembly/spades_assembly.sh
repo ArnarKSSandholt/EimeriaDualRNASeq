@@ -14,4 +14,4 @@ module load spades
 # Your commands
 spades.py -o results/assembly/spades \
     -1 results/assembly/trimmomatic/Eimeria_R1_paired.fastq.gz \
-    -2 results/assembly/trimmomatic/Eimeria_R1_paired.fastq.gz
+    -2 results/assembly/trimmomatic/Eimeria_R2_paired.fastq.gz
