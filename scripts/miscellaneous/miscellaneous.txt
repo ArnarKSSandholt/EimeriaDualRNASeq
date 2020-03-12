@@ -1,0 +1,15 @@
+# Commanda used to create the eimeria gene name list from the eimeria gff file from NCBI
+module load bioinfo-tools cufflinks
+gffread data/reference_genomes/GCF_000499545.2_ETH001_genomic_eimeria.gff -T -o results/star/merged_reference/eimeria.gtf
+cat results/star/merged_reference/eimeria.gtf | cut -f 9 | cut -d ' ' -f 4,6 | sort -u | sed 's/"; "/\t/' | sed 's/"//' | sed 's/";//' > eimeria_genes.tsv
+
+# Command used to trim the short reads for Eimeria tenella genome assembly
+trimmomatic PE -threads 4 \
+data/assembly_reads/short_reads/Eimeria_S2_L001_R1_001.fastq.gz \
+data/assembly_reads/short_reads/Eimeria_S2_L001_R2_001.fastq.gz \
+results/assembly/trimmomatic/Eimeria_R1_paired.fastq.gz \
+results/assembly/trimmomatic/Eimeria_R1_unpaired.fastq.gz \
+results/assembly/trimmomatic/Eimeria_R2_paired.fastq.gz \
+results/assembly/trimmomatic/Eimeria_R2_unpaired.fastq.gz \
+ILLUMINACLIP:data/adapters/TruSeq3-PE.fa:2:30:10:2:keepBothReads \
+SLIDINGWINDOW:4:20
