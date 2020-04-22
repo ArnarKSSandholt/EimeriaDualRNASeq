@@ -39,3 +39,27 @@ results/htseq/reverse/in_vitro_pilot/processed_reads/
 results/htseq/reverse/SI-2311/processed_reads/
 
 results/htseq/reverse/SH-2259/processed_reads/
+
+results/htseq/reverse/in_vitro_fusion/processed_reads/eimeria/
+
+results/htseq/reverse/in_vitro_fusion/processed_reads/chicken/
+
+results/htseq/reverse/in_vitro_fusion/processed_reads/
+
+figures/
+
+WGCNA_test/
+
+results/
+
+*.RData
+
+data/chicken_go_annotation/
+
+data/eimeria_go_kegg_annotation/
+
+geneInfo.csv
+
+geneInfo_fusion.csv
+
+immune_classified_genes.csv

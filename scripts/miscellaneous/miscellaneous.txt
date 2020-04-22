@@ -1,7 +1,14 @@
-# Commanda used to create the eimeria gene name list from the eimeria gff file from NCBI
-module load bioinfo-tools cufflinks
-gffread data/reference_genomes/GCF_000499545.2_ETH001_genomic_eimeria.gff -T -o results/star/merged_reference/eimeria.gtf
-cat results/star/merged_reference/eimeria.gtf | cut -f 9 | cut -d ' ' -f 4,6 | sort -u | sed 's/"; "/\t/' | sed 's/"//' | sed 's/";//' > eimeria_genes.tsv
+# Commanda used to create the eimeria and chicken gene name lists from the eimeria and chicken gff files from NCBI
+cat GCF_000499545.2_ETH001_genomic_eimeria.gff | tail -n +9 | grep gbkey=Gene | cut -f 9 | cut -d ';' -f 1,2,3 | \
+sed -e 's/ID=//' -e 's/;Dbxref=GeneID:/\t/' -e 's/;Name=/\t/' > eimeria_genes.tsv
+
+cat GCF_000002315.6_GRCg6a_genomic_chicken.gff | tail -n +9 | grep gbkey=Gene | cut -f 9 | cut -d ';' -f 1,2 | \
+sed -r -e 's/ID=//' -e 's/Dbxref=GeneID://' -e 's/Dbxref=CGNC:.+,GeneID://' -e 's/,miRBase.+//' -e 's/;/\t/' > chicken_genes.tsv
+
+# Command used to do the same as above for matching transcript identifiers for a KEGG analysis with gene identifiers
+cat GCF_000499545.2_ETH001_genomic_eimeria.gff | tail -n +9 | grep gbkey=CDS | cut -f 9 | cut -d ';' -f 3 | \
+sed -e 's/Dbxref=GeneID://' -e 's/,Genbank:/\t/' -e 's/Dbxref=Genbank://' -e 's/,GeneID:/\t/' | sort -u > eimeria_transcript_to_gene.tsv
+
 
 # Command used to trim the short reads for Eimeria tenella genome assembly
 trimmomatic PE -threads 4 \
