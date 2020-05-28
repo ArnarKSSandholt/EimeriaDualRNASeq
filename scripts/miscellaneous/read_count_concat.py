@@ -1,5 +1,6 @@
 # Concatenates the count files for each organism into a single file and fixes the gene names for both
-# Usage: python read_count_concat.py /Path/to/chicken/read/files /Path/to/Eimeria/read/files /Path/to/chicken/gene/list.tsv /Path/to/Eimeria/gene/list.tsv /Path/to/output/files
+# Usage: python read_count_concat.py /Path/to/chicken/read/files /Path/to/Eimeria/read/files /Path/to/chicken/gene/list.tsv \
+# /Path/to/Eimeria/gene/list.tsv /Path/to/Eimeria/product/list /Path/to/output/files
 
 import pandas as pd
 from os import listdir, mkdir
@@ -10,7 +11,8 @@ chicken_path = sys.argv[1]
 eimeria_path = sys.argv[2]
 chicken_gene_path = sys.argv[3]
 eimeria_gene_path = sys.argv[4]
-output_path = sys.argv[5]
+eimeria_product_path = sys.argv[5]
+output_path = sys.argv[6]
 
 chicken_file_names = listdir(chicken_path)
 eimeria_file_names = listdir(eimeria_path)
@@ -54,3 +56,9 @@ eimeria_gene_table = pd.read_csv(eimeria_gene_path, sep = "\t", header = None, n
 old_table = pd.merge(old_table, eimeria_gene_table, on = "gene_name")
 old_table = pd.concat([old_table.iloc[:,-1], old_table.iloc[:,-2], old_table.iloc[:,1:-2]], axis = 1)
 old_table.to_csv(output_path+"/eimeria_counts.csv", sep = ",", index = False)
+
+# Replace Eimeria gene identifiers with Entrez Gene IDs and locus tags for an annotation file
+eimeria_product_table = pd.read_csv(eimeria_product_path, sep = "\t", header = None, names = ["gene_name","product"])
+eimeria_product_table = pd.merge(eimeria_product_table, eimeria_gene_table, on = "gene_name")
+eimeria_product_table = pd.concat([eimeria_product_table.iloc[:,-1], eimeria_product_table.iloc[:,-2], eimeria_product_table.iloc[:,1]], axis = 1)
+eimeria_product_table.to_csv(output_path+"/eimeria_gene_products.csv", sep = "\t", index = False)

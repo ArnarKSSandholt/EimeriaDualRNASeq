@@ -152,18 +152,22 @@ m <- match(gene_list, egSYMBOL$symbol)
 entrez_geneIDs <- egSYMBOL$gene_id[m]
 
 # GO category and KEGG pathway analysis of the data.  For each list, the data is in order of increasing time
-go_chicken_list <- lapply(chicken_test_list, 
+go_chicken_list_vivo <- lapply(chicken_test_list, 
                           function(x) goana(x, geneid = entrez_geneIDs, FDR = 0.05, species = "Gg"))
-kegg_chicken_list <- lapply(chicken_test_list, 
+kegg_chicken_list_vivo <- lapply(chicken_test_list, 
                             function(x) kegga(x, geneid = entrez_geneIDs, FDR = 0.05, species.KEGG = "gga"))
-topgo_chicken_up_list <- lapply(go_chicken_list, 
+topgo_chicken_up_list_vivo <- lapply(go_chicken_list_vivo, 
                                 function(x) topGO(x, ont="BP", sort="Up", n=30))
-topgo_chicken_down_list <- lapply(go_chicken_list, 
+topgo_chicken_down_list_vivo <- lapply(go_chicken_list_vivo, 
                                   function(x) topGO(x, ont="BP", sort="Down", n=30))
-topkegg_chicken_up_list <- lapply(kegg_chicken_list,
+topgo_chicken_all_list_vivo <- lapply(go_chicken_list_vivo, 
+                                  function(x) topGO(x, ont="BP", n=30))
+topkegg_chicken_up_list_vivo <- lapply(kegg_chicken_list_vivo,
                                   function(x) topKEGG(x, sort="Up", n=30))
-topkegg_chicken_down_list <- lapply(kegg_chicken_list,
+topkegg_chicken_down_list_vivo <- lapply(kegg_chicken_list_vivo,
                                     function(x) topKEGG(x, sort="Down", n=30))
+topkegg_chicken_all_list_vivo <- lapply(kegg_chicken_list_vivo,
+                                    function(x) topKEGG(x, n=30))
 
 
 

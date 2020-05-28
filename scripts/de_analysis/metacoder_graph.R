@@ -1,6 +1,6 @@
 # Code adapted from https://grunwaldlab.github.io/metacoder_documentation/publication--09--gene_expression.html
-output_format <- "pdf"
-output_folder <- "results"
+output_format <- "png"
+output_folder <- "figures/tree_plots/"
 pub_fig_folder <- "publication"
 revision_n <- 1
 
@@ -46,7 +46,7 @@ while (i < length(test_topgenes_chicken_list)) {
   test_topgenes_chicken_list[[i]]$table$entrez_gene_id <- as.character(test_topgenes_chicken_list[[i]]$table$entrez_gene_id)
   test_topgenes_chicken_list_pos[[i]]$table$entrez_gene_id <- as.character(test_topgenes_chicken_list_pos[[i]]$table$entrez_gene_id)
   test_topgenes_chicken_list_neg[[i]]$table$entrez_gene_id <- as.character(test_topgenes_chicken_list_neg[[i]]$table$entrez_gene_id)
-  create_go_tree_plot(test_topgenes_chicken_list[[i]]$table, tree_names[i], fc_scale = "both")
+  create_go_tree_plot(test_topgenes_chicken_list[[i]]$table, tree_names[i], output_format = output_format, output_folder = output_folder, fc_scale = "both")
   create_go_tree_plot(test_topgenes_chicken_list_pos[[i]]$table, tree_names_pos[i], fc_scale = "pos")
   create_go_tree_plot(test_topgenes_chicken_list_neg[[i]]$table, tree_names_neg[i], fc_scale = "neg")
 }

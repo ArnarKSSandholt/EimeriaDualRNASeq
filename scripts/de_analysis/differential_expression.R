@@ -13,6 +13,8 @@ library(gplots)
 library(pals)
 library(ClassDiscovery)
 library(RColorBrewer)
+library(Rmisc)
+library(GOfuncR)
 
 # Specify the path to the read files and metadata and read them into R
 path_to_chicken_reads <- "results/htseq/reverse/in_vitro_fusion/processed_reads/chicken_counts.csv"
@@ -44,16 +46,18 @@ group_eimeria <- factor(eimeria_annotation[colnames(eimeria_reads)[-c(1,2)],"Tim
 chicken_cpm_raw <- cpm(chicken_reads[,-c(1,2)])
 eimeria_cpm_raw <- cpm(eimeria_reads[,-c(1,2)])
 
-rownames(chicken_cpm_raw) <- chicken_reads[,2]
+rownames(chicken_cpm_raw) <- chicken_reads[,1]
 rownames(eimeria_cpm_raw) <- eimeria_reads[,1]
 
 pca_chicken <- prcomp(chicken_cpm_raw)
 pca_eimeria <- prcomp(eimeria_cpm_raw)
 
-ggbiplot(pca_chicken, labels = chicken_reads[,2]) + coord_cartesian(xlim = c(0, 160)) + 
+ggbiplot(pca_chicken, var.axes = FALSE) + coord_cartesian(xlim = c(0, 160)) +
+  geom_text(aes(label = chicken_reads[,1]), hjust = 0.5, vjust = -0.5, size = 3) +
   labs(title = "PCA of normalized chicken read counts per gene") +
   theme(plot.title = element_text(hjust = 0.5))
-ggbiplot(pca_eimeria, labels = eimeria_reads[,1]) + coord_cartesian(xlim = c(0, 60)) + 
+ggbiplot(pca_eimeria, var.axes = FALSE) + coord_cartesian(xlim = c(0, 60)) +
+  geom_text(aes(label = eimeria_reads[,1]), hjust = 0.5, vjust = -0.5, size = 3) +
   labs(title = "PCA of normalized E. tenella read counts per gene") +
   theme(plot.title = element_text(hjust = 0.5))
 
@@ -120,8 +124,18 @@ chicken_dgelist_filt_norm <- calcNormFactors(chicken_dgelist_filt)
 eimeria_dgelist_filt_norm <- calcNormFactors(eimeria_dgelist_filt)
 
 # Check MDS plots of logFC values for outliers or other potential issues
-plotMDS(chicken_dgelist_filt_norm)
-plotMDS(eimeria_dgelist_filt_norm)
+#chicken_labels <- paste(rownames(chicken_dgelist_filt_norm$samples), chicken_dgelist_filt_norm$samples$group, sep = "_")
+#eimeria_labels <- paste(rownames(eimeria_dgelist_filt_norm$samples), eimeria_dgelist_filt_norm$samples$group, sep = "_")
+
+mds_path <- "figures/sample_clustering/chicken_mds.png"
+png(mds_path, height = 500, width = 800, pointsize = 16)
+plotMDS(chicken_dgelist_filt_norm, labels = chicken_dgelist_filt_norm$samples$group, main = "MDS plot of chicken samples")
+dev.off()
+
+mds_path <- "figures/sample_clustering/eimeria_mds.png"
+png(mds_path, height = 500, width = 800, pointsize = 16)
+plotMDS(eimeria_dgelist_filt_norm, labels = eimeria_dgelist_filt_norm$samples$group, main = "MDS plot of E. tenella samples")
+dev.off()
 
 # Check PCA plots of CPM values for each sample for outliers and other potential issues
 chicken_cpm <- cpm.DGEList(chicken_dgelist_filt_norm)
@@ -130,14 +144,25 @@ eimeria_cpm <- cpm.DGEList(eimeria_dgelist_filt_norm)
 pca_cpm_chicken <- prcomp(t(chicken_cpm))
 pca_cpm_eimeria <- prcomp(t(eimeria_cpm[,-11]))
 
+pca_path <- "figures/sample_clustering/chicken_pca.png"
+png(pca_path, height = 500, width = 500)
 ggbiplot(pca_cpm_chicken, var.axes = FALSE, choices = 1:2, alpha = 1) +
-  geom_text(aes(label=chicken_dgelist_filt_norm$samples$group),hjust=0.5, vjust=-0.5) +
+  geom_text(aes(label = chicken_dgelist_filt_norm$samples$group), hjust  =0.5, vjust = -0.5, size = 4.5) +
   ggtitle("PCA of normalized chicken read counts per sample") +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5, size = 20),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12))
+dev.off()
+
+pca_path <- "figures/sample_clustering/eimeria_pca.png"
+png(pca_path, height = 500, width = 500)
 ggbiplot(pca_cpm_eimeria, var.axes = FALSE, choices = 1:2, alpha = 1) +
-  geom_text(aes(label=eimeria_dgelist_filt_norm$samples$group[-11]),hjust=0.5, vjust=-0.5) +
+  geom_text(aes(label = eimeria_dgelist_filt_norm$samples$group[-11]), hjust = 0.5, vjust = -0.5, size = 4.5) +
   ggtitle("PCA of normalized E. tenella read counts per sample") +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5, size = 20),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12))
+dev.off()
 
 # The chicken analysis design
 chicken_dgelist_filt_norm$samples$group <- relevel(chicken_dgelist_filt_norm$samples$group, ref="U.0")
@@ -198,35 +223,64 @@ logfc_threshold <- 1
 
 # Volcano plots for all comparisons
 timepoints <- c("2h","4h","12h","24h","48h","72h")
+plot_list <- list()
 i = 1
 while (i <= length(topgenes_chicken_list)) {
+  volcano_path <- paste("figures/volcano_plots/chicken_volcano_", timepoints[i], ".png", sep = "")
+  png(volcano_path, height = 500, width = 800)
   p <- EnhancedVolcano(topgenes_chicken_list[[i]]$table,
                   lab = rownames(topgenes_chicken_list[[i]]$table),
-                  title = paste('Chicken in vitro', timepoints[i]),
+                  title = paste('Chicken in vitro', timepoints[i], "volcano plot"),
+                  subtitle = "",
                   x = 'logFC',
                   y = 'FDR',
                   xlim = c(-10,10),
                   ylim = c(0,10),
+                  pointSize = 4,
+                  labSize = 5,
                   pCutoff = fdr_threshold,
-                  FCcutoff = logfc_threshold)
+                  FCcutoff = logfc_threshold) +
+    theme(plot.title = element_text(hjust = 0.5, size = 20),
+          plot.subtitle = element_text(hjust = 0.5, size = 16),
+          legend.text = element_text(size = 16))
+  plot_list[[i]] <- p
   print(p)
+  dev.off()
   i = i + 1
 }
+volcano_path <- "figures/volcano_plots/all_chicken_plots.png"
+png(volcano_path, height = 1200, width = 1200)
+multiplot(plotlist = plot_list, cols = 2)
+dev.off()
 
 i = 1
 while (i <= length(topgenes_eimeria_list)) {
+  volcano_path <- paste("figures/volcano_plots/eimeria_volcano_", timepoints[i], ".png", sep = "")
+  png(volcano_path, height = 500, width = 800)
   p <- EnhancedVolcano(topgenes_eimeria_list[[i]]$table,
                        lab = rownames(topgenes_eimeria_list[[i]]$table),
-                       title = paste('Eimeria in vitro', timepoints[i]),
+                       title = paste('Eimeria in vitro', timepoints[i], "volcano plot"),
+                       subtitle = "",
                        x = 'logFC',
                        y = 'FDR',
-                       xlim = c(-13,13),
-                       ylim = c(0,40),
+                       xlim = c(-13, 13),
+                       ylim = c(0, 40),
+                       pointSize = 4,
+                       labSize = 5,
                        pCutoff = fdr_threshold,
-                       FCcutoff = logfc_threshold)
+                       FCcutoff = logfc_threshold) +
+    theme(plot.title = element_text(hjust = 0.5, size = 20),
+          plot.subtitle = element_text(hjust = 0.5, size = 16),
+          legend.text = element_text(size = 16))
+  plot_list[[i]] <- p
   print(p)
+  dev.off()
   i = i + 1
 }
+volcano_path <- "figures/volcano_plots/all_eimeria_plots.png"
+png(volcano_path, height = 1200, width = 1200)
+multiplot(plotlist = plot_list, cols = 2)
+dev.off()
 
 
 # Compute the number of unique genes differentially expressed at each time point for both datasets, which genes they are and
@@ -458,10 +512,24 @@ topgo_chicken_up_list <- lapply(go_chicken_list,
                                 function(x) topGO(x, ont="BP", sort="Up", n=250))
 topgo_chicken_down_list <- lapply(go_chicken_list, 
                                   function(x) topGO(x, ont="BP", sort="Down", n=250))
+topgo_chicken_all_list <- lapply(go_chicken_list, 
+                                 function(x) topGO(x, ont="BP", n=250))
 topkegg_chicken_up_list <- lapply(kegg_chicken_list,
                                   function(x) topKEGG(x, sort="Up", n=250))
 topkegg_chicken_down_list <- lapply(kegg_chicken_list,
                                     function(x) topKEGG(x, sort="Down", n=250))
+topkegg_chicken_all_list <- lapply(kegg_chicken_list, 
+                                   function(x) topKEGG(x, n=250))
+
+# Print a list of the top 50 lowest p-value categories for each time point
+i <- 0
+while (i < length(topgo_chicken_all_list)) {
+  i <- i + 1
+  go_path <- paste("results/de_analysis/top_go_kegg_tables/top_go_", timepoints[i], ".csv", sep = "")
+  kegg_path <- paste("results/de_analysis/top_go_kegg_tables/top_kegg_", timepoints[i], ".csv", sep = "")
+  write.csv(topgo_chicken_all_list[[i]][1:50,], go_path)
+  write.csv(topkegg_chicken_all_list[[i]][1:50,], kegg_path)
+}
 
 
 # GO and KEGG category heatmaps
@@ -609,7 +677,8 @@ toll_like_gene_list <- get_de_kegg_cat_genes(topgenes_chicken_list,"gga", "path:
 
 
 plot_de_cat_genes <- function(de_cat_genes, experimental_conditions, plot_title, fdr_thresh = 0.05, 
-                              logfc_thresh = 1, num_samples_fdr_thresh = 1, num_samples_logfc_thresh = 1) {
+                              logfc_thresh = 1, num_samples_fdr_thresh = 1, num_samples_logfc_thresh = 1,
+                              cat_plot_path, plot_scale = c(-5,7.5)) {
   # Produces a line plot of log2 fold change across a set of samples for genes in a specific
   # GO or KEGG category
   i <- 1
@@ -677,51 +746,68 @@ plot_de_cat_genes <- function(de_cat_genes, experimental_conditions, plot_title,
     curr_num_genes <- dim(de_cat_gene_df)[1]/num_conditions
     
     de_cat_gene_df$gene_timepoints <- rep(experimental_conditions, curr_num_genes)
+    cat_plot_path <- gsub(".png", "_1.png", cat_plot_path)
+    png(cat_plot_path, width = 1200, height = 800)
     p <- ggplot(de_cat_gene_df, aes(x=gene_timepoints, y=logFC, group=gene_name)) +
-      geom_line(aes(color = gene_name)) +
+      geom_line(aes(color = gene_name), size = 1.5) +
       scale_color_manual(values = as.vector(polychrome(curr_num_genes))) +
-      geom_point(aes(shape=below_fdr_threshold, color = gene_name), size = 3) +
+      geom_point(aes(shape=below_fdr_threshold, color = gene_name), size = 5) +
       scale_shape_manual(values = c(1,17)) +
       scale_x_discrete(limits=experimental_conditions) +
       theme_bw() +
       ggtitle(plot_title) +
-      theme(plot.title = element_text(hjust = 0.5, size = 18)) +
-      coord_cartesian(ylim = c(-5, 7.5), xlim = c(0, 80)) +
+      theme(plot.title = element_text(hjust = 0.5, size = 36),
+            legend.title = element_text(size = 28),
+            legend.text = element_text(size = 20),
+            axis.text = element_text(size = 16),
+            axis.title = element_text(size = 24)) +
+      coord_cartesian(ylim = plot_scale, xlim = c(0, 80)) +
       labs(shape = "Below FDR threshold", color = "Gene symbol") +
       xlab("Sample time points") + ylab("log2(Fold change)") +
       geom_hline(yintercept = 0)
     print(p)
+    dev.off()
+    cat_plot_path <- gsub("_1.png", "_2.png", cat_plot_path)
     
     de_cat_gene_df <- de_cat_gene_df_list[[2]]
     curr_num_genes <- dim(de_cat_gene_df)[1]/num_conditions
   }
     
   de_cat_gene_df$gene_timepoints <- rep(experimental_conditions, curr_num_genes)
+  png(cat_plot_path, width = 1200, height = 800)
   p <- ggplot(de_cat_gene_df, aes(x=gene_timepoints, y=logFC, group=gene_name)) +
-    geom_line(aes(color = gene_name)) +
+    geom_line(aes(color = gene_name), size = 1.5) +
     scale_color_manual(values = as.vector(polychrome(curr_num_genes))) +
-    geom_point(aes(shape=below_fdr_threshold, color = gene_name), size = 3) +
+    geom_point(aes(shape=below_fdr_threshold, color = gene_name), size = 5) +
     scale_shape_manual(values = c(1,17)) +
     scale_x_discrete(limits=experimental_conditions) +
     theme_bw() +
     ggtitle(plot_title) +
-    theme(plot.title = element_text(hjust = 0.5, size = 18)) +
-    coord_cartesian(ylim = c(-5, 7.5), xlim = c(0, 80)) +
+    theme(plot.title = element_text(hjust = 0.5, size = 36),
+          legend.title = element_text(size = 28),
+          legend.text = element_text(size = 20),
+          axis.text = element_text(size = 16),
+          axis.title = element_text(size = 24)) +
+    coord_cartesian(ylim = plot_scale, xlim = c(0, 80)) +
     labs(shape = "Below FDR threshold", color = "Gene symbol") +
     xlab("Sample time points") + ylab("log2(Fold change)") +
     geom_hline(yintercept = 0)
   print(p)
+  dev.off()
 }
 
 # Plot a lineplot showing log fold change in each sample for the genes in the toll like KEGG pathway
 plot_de_cat_genes(toll_like_gene_list, c(2,4,12,24,48,72), "Toll-like receptor signaling pathway gene expression", fdr_thresh = fdr_threshold, 
-                  logfc_thresh = logfc_threshold, num_samples_fdr_thresh = 1, num_samples_logfc_thresh = 1)
+                  logfc_thresh = logfc_threshold, num_samples_fdr_thresh = 1, num_samples_logfc_thresh = 1,
+                  "figures/expression_line_plots/toll_like_receptor_plot.png")
 tlr15_list <- lapply(topgenes_chicken_list, function(x) x$table["TLR15",])
 tlr21_list <- lapply(topgenes_chicken_list, function(x) x$table["TLR21",])
 plot_de_cat_genes(tlr15_list, c(2,4,12,24,48,72), "TLR15 expression", fdr_thresh = fdr_threshold, 
-                  logfc_thresh = logfc_threshold, num_samples_fdr_thresh = 0, num_samples_logfc_thresh = 0)
+                  logfc_thresh = logfc_threshold, num_samples_fdr_thresh = 0, num_samples_logfc_thresh = 0,
+                  "figures/expression_line_plots/tlr15_expression.png")
 plot_de_cat_genes(tlr21_list, c(2,4,12,24,48,72), "TLR21 expression", fdr_thresh = fdr_threshold, 
-                  logfc_thresh = logfc_threshold, num_samples_fdr_thresh = 0, num_samples_logfc_thresh = 0)
+                  logfc_thresh = logfc_threshold, num_samples_fdr_thresh = 0, num_samples_logfc_thresh = 0,
+                  "figures/expression_line_plots/tlr21_expression.png")
 
 
 path_to_immuno_gene_list <- "immune_classified_genes.csv"
@@ -733,13 +819,74 @@ while (i < length(immune_cats)) {
   i <- i + 1
   cat_gene_ids <- immune_classified_genes[immune_cats[i] == immune_classified_genes$Category,]$entrez_gene_id
   cat_gene_list <- lapply(topgenes_chicken_list, function(x) x$table[match(cat_gene_ids, x$table$entrez_gene_id),])
+  if (immune_cats[i] == "mannose rec") {
+    j <- 0
+    while (j < length(cat_gene_list)) {
+      j <- j + 1
+      rownames(cat_gene_list[[j]]) <- c("MRC1LC", "MRC1LD", "MRC1LE", "MRC1LB", "MRC1LA", "MRC2", "PLA2R1")
+      cat_gene_list[[j]]$gene_name <- c("MRC1LC", "MRC1LD", "MRC1LE", "MRC1LB", "MRC1LA", "MRC2", "PLA2R1")
+    }
+  }
   cat_title <- paste("Immune category", immune_cats[i], "gene expression")
-  cat_plot_path <- paste("figures/expression_line_plots/immune_cat_", gsub(" ", "_", gsub("/", "_", immune_cats[i])), ".pdf", sep = "")
-  pdf(cat_plot_path, width = 19.2, height = 10.8)
+  cat_plot_path <- paste("figures/expression_line_plots/immune_cat_", gsub(" ", "_", gsub("/", "_", immune_cats[i])), ".png", sep = "")
+  cat_title <- gsub(" rec", " receptor", gsub("imm ", "immune ", cat_title))
   plot_de_cat_genes(cat_gene_list, c(2,4,12,24,48,72), cat_title, fdr_thresh = fdr_threshold, 
-                    logfc_thresh = logfc_threshold, num_samples_fdr_thresh = 1, num_samples_logfc_thresh = 1)
-  dev.off()
+                    logfc_thresh = logfc_threshold, num_samples_fdr_thresh = 1, num_samples_logfc_thresh = 1,
+                    cat_plot_path)
 }
+
+kegg_immune_categories <- c("path:gga04640", "path:gga04610", "path:gga04611", "path:gga04620", "path:gga04624", "path:gga04621",
+                            "path:gga04622", "path:gga04623", "path:gga04625", "path:gga04650", "path:gga04612", "path:gga04660",
+                            "path:gga04658", "path:gga04659", "path:gga04657", "path:gga04662", "path:gga04664", "path:gga04666",
+                            "path:gga04670", "path:gga04672", "path:gga04062")
+
+go_immune_categories <- get_child_nodes("GO:0002376")
+
+i <- 0
+immune_genes <- c()
+while (i < length(go_immune_categories$child_go_id)) {
+  i <- i + 1
+  go_cat_list <- get_de_go_cat_genes(topgenes_chicken_list, go_immune_categories$child_go_id[i], egGO, egSYMBOL)
+  print(go_immune_categories$child_go_id[i])
+  print(go_cat_list[[1]])
+  immune_genes <- c(immune_genes, go_cat_list[[1]]$gene_name)
+}
+
+i <- 0
+while (i < length(kegg_immune_categories)) {
+  i <- i + 1
+  kegg_cat_list <- get_de_kegg_cat_genes(topgenes_chicken_list,"gga", kegg_immune_categories[i], egSYMBOL)
+  immune_genes <- c(immune_genes, kegg_cat_list[[1]]$gene_name)
+}
+
+immune_genes <- c(immune_genes, immune_classified_genes$gene_name)
+
+immune_genes <- unique(immune_genes)
+
+m <- match(immune_genes, rownames(chicken_logfc_df))
+m <- m[complete.cases(m)]
+chicken_immune_gene_logfc_df <- chicken_logfc_df[m,]
+
+m <- match(immune_genes, rownames(chicken_logfc_df_filt))
+m <- m[complete.cases(m)]
+chicken_immune_gene_logfc_df_filt <- chicken_logfc_df_filt[m,]
+
+heatmap_path <- "figures/heatmaps/chicken_immune_genes_logfc.png"
+png(heatmap_path, width = 1500, height = 2000, pointsize = 100)
+aspectHeatmap(as.matrix(chicken_immune_gene_logfc_df), Colv = NA,
+              xlab = "Timepoints", main = "Chicken immune gene log fold change", 
+              col = colorRampPalette(brewer.pal(9, "RdYlGn"))(500),
+              hExp = 5.5, wExp = 0.8)
+dev.off()
+
+heatmap_path <- "figures/heatmaps/chicken_immune_genes_logfc_filt.png"
+png(heatmap_path, width = 1000, height = 1600, pointsize = 20)
+aspectHeatmap(as.matrix(chicken_immune_gene_logfc_df_filt), Colv = NA,
+              xlab = "Timepoints", main = "Chicken immune gene log fold change", 
+              col = colorRampPalette(brewer.pal(9, "RdYlGn"))(500),
+              hExp = 2.3)
+dev.off()
+
 
 
 # Eimeria GO and KEGG analysis
@@ -903,6 +1050,128 @@ eimeria_kegg_analysis <- function(topgenes_eimeria, eimeria_kegg_annotation, eim
 allkegg_eimeria_list <- lapply(topgenes_eimeria_list, 
                              function(x) eimeria_kegg_analysis(x, eimeria_kegg_annotation, eimeria_kegg_cats,
                                                                gene_universe_pathways, fdr_threshold, 1))
+
+# Export the top 50 most significantly enriched GO categories and KEGG pathways
+
+i <- 0
+while (i < length(allgo_eimeria_list)) {
+  i <- i + 1
+  go_path <- paste("results/de_analysis/top_go_kegg_tables/top_go_eimeria_", timepoints[i], ".csv", sep = "")
+  kegg_path <- paste("results/de_analysis/top_go_kegg_tables/top_kegg_eimeria_", timepoints[i], ".csv", sep = "")
+  min_pval_go <- pmin(allgo_eimeria_list[[i]]$P.Up, allgo_eimeria_list[[i]]$P.Down)
+  min_pval_kegg <- pmin(allkegg_eimeria_list[[i]]$P.Up, allkegg_eimeria_list[[i]]$P.Down)
+  allgo_eimeria_list[[i]] <- allgo_eimeria_list[[i]][order(min_pval_go),]
+  allkegg_eimeria_list[[i]] <- allkegg_eimeria_list[[i]][order(min_pval_kegg),]
+  write.csv(allgo_eimeria_list[[i]][1:50,], go_path)
+  write.csv(allkegg_eimeria_list[[i]][1:50,], kegg_path)
+}
+
+
+
+# Immune related E. tenella genes are plotted here
+
+immune_related_eimeria_gene <- "ETH_00030475"
+cat_gene_ids <- immune_related_eimeria_gene
+cat_gene_list <- lapply(topgenes_eimeria_list, function(x) x$table[match(cat_gene_ids, x$table$locus_tag),])
+cat_gene_list <- lapply(cat_gene_list, function(x) {colnames(x) <- c("entrez_gene_id", "gene_name", "logFC", "logCPM", "F", "PValue", "FDR")
+                                   return(x)})
+cat_title <- "Eimeria immune activating genes"
+cat_plot_path <- "figures/expression_line_plots/eimeria_immune_activating_genes.png"
+
+plot_de_cat_genes(cat_gene_list, c(2,4,12,24,48,72), cat_title, fdr_thresh = fdr_threshold, 
+                  logfc_thresh = logfc_threshold, num_samples_fdr_thresh = 1, num_samples_logfc_thresh = 1,
+                  cat_plot_path)
+
+
+# Look at what limited GO and KEGG category information is available on E. tenella
+
+apoptosis_affecting_go <- get_child_nodes("GO:0052040")
+
+apoptosis_affecting_go_eimeria <- allgo_eimeria_list[[1]][match(apoptosis_affecting_go$child_go_id, rownames(allgo_eimeria_list[[1]])),]
+
+kegg_immune_categories_eimeria <- c("path:map04640", "path:map04610", "path:map04611", "path:map04620", "path:map04624",
+                                    "path:map04621", "path:map04622", "path:map04623", "path:map04625", "path:map04650",
+                                    "path:map04612", "path:map04660", "path:map04658", "path:map04659", "path:map04657",
+                                    "path:map04662", "path:map04664", "path:map04666", "path:map04670", "path:map04672",
+                                    "path:map04062")
+
+m <- match(kegg_immune_categories_eimeria, rownames(allkegg_eimeria_list[[1]]))
+m <- m[complete.cases(m)]
+
+immune_related_kegg_eimeria_list <- lapply(allkegg_eimeria_list, function(x) x[m,])
+
+
+# Make a line plot of the percentage of Eimeria reads at different time points
+
+eimeria_perc_df <- data.frame(eimeria_perc = c(0.5169, 1.2126, 0.586, 1.744566667, 5.391266667, 2.809),
+                              timepoints = c(2, 4, 12, 24, 48, 72))
+
+
+png("figures/eimeria_sample_fraction.png", width = 1200, height = 800)
+p <- ggplot(eimeria_perc_df, aes(x = timepoints, y = eimeria_perc)) +
+  geom_line(size = 1.5) +
+  geom_point(size = 5) +
+  coord_cartesian(xlim = c(0, 80)) +
+  scale_x_discrete(limits=eimeria_perc_df$timepoints) +
+  theme_bw() +
+  ggtitle("E. tenella average sample fraction") +
+  theme(plot.title = element_text(hjust = 0.5, size = 40),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 30)) +
+  xlab("Sample time points") + ylab("E tenella percentage")
+print(p)
+dev.off()
+
+# Analyze Eimeria SAG genes
+
+eimeria_product_df <- read.delim("data/reference_genomes/eimeria_gene_products.csv",
+                                 col.names = c("gene_name", "entrez_gene_id", "product"), stringsAsFactors = FALSE)
+eimeria_SAG_genes <- eimeria_product_df[grep("sag", eimeria_product_df$product),]
+eimeria_SAG_genes <- eimeria_SAG_genes[eimeria_SAG_genes$entrez_gene_id %in% topgenes_eimeria_list[[1]]$table$entrez_gene_id,]
+eimeria_SAG_gene_ids <- eimeria_SAG_genes$entrez_gene_id
+
+SAG_gene_list <- lapply(topgenes_eimeria_list, function(x) x$table[match(eimeria_SAG_gene_ids, x$table$entrez_gene_id),])
+SAG_gene_list <- lapply(SAG_gene_list, function(x) {colnames(x) <- c("entrez_gene_id", "gene_name", "logFC", "logCPM", "F", "PValue", "FDR")
+                                                    return(x)})
+SAG_gene_list <- lapply(SAG_gene_list, function(x) {x$gene_name <- eimeria_SAG_genes$product
+                                                    return(x)})
+
+SAG_title <- "Eimeria SAG gene expression"
+SAG_plot_path <- "figures/expression_line_plots/SAG_genes.png"
+plot_de_cat_genes(SAG_gene_list, c(2,4,12,24,48,72), SAG_title, fdr_thresh = fdr_threshold, 
+                  logfc_thresh = logfc_threshold, num_samples_fdr_thresh = 1, num_samples_logfc_thresh = 1,
+                  SAG_plot_path, plot_scale = c(-12.5,12.5))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1123,7 +1392,7 @@ tab = GOenr$bestPTerms[[4]]$enrichment
 
 
   
-  
+
   
   
 # Analysis of a fusion of Eimeria and chicken data
@@ -1153,7 +1422,7 @@ rownames(fusion_dgelist$counts) <- rownames(fusion_dgelist$genes) <- fusion_dgel
 keep_fusion <- filterByExpr(fusion_dgelist)
 fusion_dgelist_filt <- fusion_dgelist[keep_fusion, ,] 
 
-# Setting the library size to the right value after filtering
+# Setting the library size to the correct value after filtering
 fusion_dgelist_filt$samples$lib.size <- colSums(fusion_dgelist_filt$counts)
 
 # Normalize gene counts to account for a few genes dominating the counts of the samples
@@ -1197,7 +1466,7 @@ nSamples = nrow(fusion_expr_cut)
 fusion_expr_trait <- fusion_annotation[-11,3]
 
 # Choose a set of soft-thresholding powers
-powers = c(c(1:9), seq(from = 10, to=100, by=5))
+powers = c(c(1:9), seq(from = 10, to=30, by=4))
 # Call the network topology analysis function
 sft = pickSoftThreshold(fusion_expr_cut, powerVector = powers, verbose = 5)
 # Plot the results:
@@ -1220,26 +1489,26 @@ plot(sft$fitIndices[,1], sft$fitIndices[,5],
 text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
 
 
-#net9 = blockwiseModules(fusion_expr_cut, power = 9,
-#                        TOMType = "unsigned", minModuleSize = 30,
-#                        reassignThreshold = 0, mergeCutHeight = 0.25,
-#                        numericLabels = TRUE, pamRespectsDendro = FALSE,
-#                        saveTOMs = TRUE,
-#                        saveTOMFileBase = "fusionTOM9", 
-#                        verbose = 3,
-#                        maxBlockSize = 21000)
-
-net18 = blockwiseModules(fusion_expr_cut, power = 18,
+net9 <- blockwiseModules(fusion_expr_cut, power = 9,
                         TOMType = "unsigned", minModuleSize = 30,
                         reassignThreshold = 0, mergeCutHeight = 0.25,
                         numericLabels = TRUE, pamRespectsDendro = FALSE,
                         saveTOMs = TRUE,
-                        saveTOMFileBase = "fusionTOM18", 
+                        saveTOMFileBase = "fusionTOM9", 
                         verbose = 3,
                         maxBlockSize = 21000)
 
+#net18 = blockwiseModules(fusion_expr_cut, power = 18,
+#                        TOMType = "unsigned", minModuleSize = 30,
+#                        reassignThreshold = 0, mergeCutHeight = 0.25,
+#                        numericLabels = TRUE, pamRespectsDendro = FALSE,
+#                        saveTOMs = TRUE,
+#                        saveTOMFileBase = "fusionTOM18", 
+#                        verbose = 3,
+#                        maxBlockSize = 21000)
+
 table(net9$colors)
-table(net18$colors)
+#table(net18$colors)
 
 # open a graphics window
 sizeGrWindow(12, 9)
@@ -1346,6 +1615,33 @@ geneInfo = geneInfo0[geneOrder, ]
 
 write.csv(geneInfo, file = "geneInfo_fusion.csv", row.names = FALSE)
 
+geneInfo <- read.delim("geneInfo_fusion.csv", sep = ",", stringsAsFactors = FALSE)
+gene_info_mod <- geneInfo
+chicken_product_df <- read.delim("data/reference_genomes/chicken_gene_products.tsv", 
+                                 header = FALSE, col.names = c("gene_name", "product"))
+chicken_product_df <- chicken_product_df[!duplicated(chicken_product_df[,1]),]
+eimeria_product_df <- read.delim("data/reference_genomes/eimeria_gene_products.csv", 
+                                 col.names = c("gene_name", "entrez_gene_id", "product"))
+# product_df <- rbind(chicken_product_df, eimeria_product_df[,c(1,3)])
+
+egGENENAME <- toTable(org.Gg.egGENENAME)
+gene_info_mod$Gene_name <- egGENENAME[match(gene_info_mod$EntrezID, egGENENAME$gene_id),]$gene_name
+gene_info_mod$Product <- product_df[match(gene_info_mod$geneSymbol, product_df$gene_name),]$product
+
+colnames(logfc_filt_de_genes_eimeria) <- c("gene_name", "entrez_gene_id", "FDR")
+logfc_filt_de_genes <- rbind(logfc_filt_de_genes_chicken[,1:3], logfc_filt_de_genes_eimeria)
+gene_info_mod$Differentially_expressed <- gene_info_mod$geneSymbol %in% logfc_filt_de_genes$gene_name
+
+fusion_logfc_df <- rbind(chicken_logfc_df, eimeria_logfc_df)
+colnames(fusion_logfc_df) <- c("log2 Fold change at 2h", "log2 Fold change at 4h", "log2 Fold change at 12h", 
+                               "log2 Fold change at 24h", "log2 Fold change at 48h", "log2 Fold change at 72h")
+m <- match(gene_info_mod$geneSymbol, rownames(fusion_logfc_df))
+gene_info_mod[,35:40] <- fusion_logfc_df[m,]
+
+gene_info_mod <- gene_info_mod[,c(1,2,3,32:40,4:31)]
+
+write.csv(gene_info_mod, file = "geneInfo_fusion_annotated.csv", row.names = FALSE)
+
 # GO and KEGG analyses of the modules
 
 # Chicken gene to GO
@@ -1388,11 +1684,12 @@ module_cat_enrichment <- function(geneInfo, annotation, cat_id, num_genes) {
     cat_results <- data.frame(categories[i], genes_in_cat[1,3], N, x, fisher_result$p.value, stringsAsFactors = FALSE)
     cat_analysis_results[i,] <- cat_results[1,]
   }
-  print("Hello, world")
+  cat_analysis_results <- cat_analysis_results[order(cat_analysis_results$P_val),]
   return(cat_analysis_results)
 }
 
 geneInfo_mod <- list()
+modNames <- unique(geneInfo$moduleColor)
 i <- 0
 while (i < length(modNames)) {
   i <- i + 1
@@ -1408,7 +1705,7 @@ while (i < length(module_go_cats)) {
   write.csv(module_go_cats[[i]], file = go_file_name, row.names = FALSE)
 }
 
-# Chicken gene to KEGG
+# Chicken gene to KEGG from KEGGrest
 chicken_pathway_genes <- keggLink("pathway", "gga")
 pathways <- keggList("pathway")
 
@@ -1417,7 +1714,9 @@ chicken_pathway_genes <- gsub("gga", "map", chicken_pathway_genes)
 
 chicken_kegg_annotation <- data.frame(gene_symbol = chicken_dgelist$genes$gene_name[m],
                                       kegg_pathway = chicken_pathway_genes,
-                                      kegg_term = pathways[match(substr(chicken_pathway_genes, 9, nchar(chicken_pathway_genes)), substr(names(pathways), 9, nchar(names(pathways))))])
+                                      kegg_term = pathways[match(substr(chicken_pathway_genes, 9, nchar(chicken_pathway_genes)),
+                                                                 substr(names(pathways), 9, nchar(names(pathways))))],
+                                      stringsAsFactors=FALSE)
 
 chicken_kegg_annotation <- chicken_kegg_annotation[complete.cases(chicken_kegg_annotation),]
 
@@ -1428,7 +1727,8 @@ m <- match(eimeria_kegg_annotation$genes, eimeria_dgelist_filt_norm$genes$entrez
 
 eimeria_kegg_annotation_symbol <- data.frame(gene_symbol = eimeria_dgelist$genes$locus_tag[m],
                                              kegg_pathway = eimeria_kegg_annotation$kegg_pathway,
-                                             kegg_term = eimeria_kegg_annotation$kegg_term)
+                                             kegg_term = eimeria_kegg_annotation$kegg_term,
+                                             stringsAsFactors=FALSE)
 
 eimeria_kegg_annotation_symbol <- eimeria_kegg_annotation_symbol[complete.cases(eimeria_kegg_annotation_symbol),]
 
@@ -1439,26 +1739,108 @@ module_kegg_cats <- lapply(geneInfo_mod, function(x) module_cat_enrichment(x, ke
 i <- 0
 while (i < length(module_go_cats)) {
   i <- i + 1
-  go_file_name <- paste("results/de_analysis/wgcna_module_go_kegg/", modNames[i], "_module_kegg_cats.csv", sep = "")
-  write.csv(module_go_cats[[i]], file = go_file_name, row.names = FALSE)
+  kegg_file_name <- paste("results/de_analysis/wgcna_module_go_kegg/", modNames[i], "_module_kegg_cats.csv", sep = "")
+  write.csv(module_kegg_cats[[i]], file = kegg_file_name, row.names = FALSE)
 }
 
 
 
+# Analyze the modules to see where the immune genes identified earlier fall and 
+# examine enrichment of phagosome, lysosome and autophagy genes
+
+kegg_lysosome_phagosome <- c("path:gga04142", "path:gga04145")
+
+go_autophagy_categories <- get_child_nodes("GO:0006914")
+
+i <- 0
+autophagy_genes <- c()
+while (i < length(go_immune_categories$child_go_id)) {
+  i <- i + 1
+  go_cat_list <- get_de_go_cat_genes(topgenes_chicken_list, go_immune_categories$child_go_id[i], egGO, egSYMBOL)
+  autophagy_genes <- c(autophagy_genes, go_cat_list[[1]]$gene_name)
+}
+autophagy_genes <- unique(autophagy_genes)
+m <- match(autophagy_genes, rownames(chicken_logfc_df_filt))
+m <- m[complete.cases(m)]
+significant_autophagy_genes <- rownames(chicken_logfc_df_filt[m,])
+
+kegg_cat_list <- get_de_kegg_cat_genes(topgenes_chicken_list,"gga", kegg_lysosome_phagosome[1], egSYMBOL)
+lysosome_genes <- kegg_cat_list[[1]]$gene_name
+m <- match(lysosome_genes, rownames(chicken_logfc_df_filt))
+m <- m[complete.cases(m)]
+significant_lysosome_genes <- rownames(chicken_logfc_df_filt[m,])
+
+kegg_cat_list <- get_de_kegg_cat_genes(topgenes_chicken_list,"gga", kegg_lysosome_phagosome[2], egSYMBOL)
+phagosome_genes <- kegg_cat_list[[1]]$gene_name
+m <- match(phagosome_genes, rownames(chicken_logfc_df_filt))
+m <- m[complete.cases(m)]
+significant_phagosome_genes <- rownames(chicken_logfc_df_filt[m,])
+
+all_immune_genes <- rownames(chicken_immune_gene_logfc_df)
+significant_immune_genes <- rownames(chicken_immune_gene_logfc_df_filt)
+
+modules <- unique(geneInfo$moduleColor)
+
+module_immune_genes_df <- as.data.frame(matrix(0, ncol = 23, nrow = length(modules)))
+
+colnames(module_immune_genes_df) <- c("Number_of_genes", "Percentage_of_E._tenella_genes", 
+                                      "Number_of_immune_genes", "Number_of_significant_immune_genes",
+                                      "Number_of_autophagy_genes", "Number_of_lysosome_genes",
+                                      "Number_of_phagosome_genes", "Number_of_SAG_genes",
+                                      immune_cats)
+rownames(module_immune_genes_df) <- modules
+
+i <- 0
+while (i < length(modules)){
+  i <- i + 1
+  module_immune_genes_df$Number_of_genes[i] <- dim(geneInfo[geneInfo$moduleColor == modules[i],])[1]
+  num_eimeria_genes <- length(grep("ETH_", geneInfo$geneSymbol[geneInfo$moduleColor == modules[i]]))
+  module_immune_genes_df$Percentage_of_E._tenella_genes[i] <- 100*num_eimeria_genes/module_immune_genes_df$Number_of_genes[i]
+}
+
+get_num_genes_in_modules <- function(geneInfo, genes, id_type = "gene_name") {
+  # Get the number of genes out of a list of genes that belong to each
+  # module from a WGCNA analysis
+  i <- 0
+  modules <- unique(geneInfo$moduleColor)
+  counts <- rep(0, length(modules))
+  if (id_type == "gene_name") {
+    while (i < length(modules)) {
+      i <- i + 1
+      geneInfo_module <- geneInfo[geneInfo$moduleColor == modules[i],]
+      m <- match(genes, geneInfo_module$geneSymbol)
+      m <- m[complete.cases(m)]
+      counts[i] <- length(m)
+    }
+  } else if (id_type == "entrez_id") {
+    while (i < length(modules)) {
+      i <- i + 1
+      geneInfo_module <- geneInfo[geneInfo$moduleColor == modules[i],]
+      m <- match(genes, geneInfo_module$EntrezID)
+      m <- m[complete.cases(m)]
+      counts[i] <- length(m)
+    }
+  }
+  return(counts)
+}
+
+module_immune_genes_df$Number_of_immune_genes <- get_num_genes_in_modules(geneInfo, all_immune_genes)
+module_immune_genes_df$Number_of_significant_immune_genes <- get_num_genes_in_modules(geneInfo, significant_immune_genes)
+module_immune_genes_df$Number_of_autophagy_genes <- get_num_genes_in_modules(geneInfo, significant_autophagy_genes)
+module_immune_genes_df$Number_of_lysosome_genes <- get_num_genes_in_modules(geneInfo, significant_lysosome_genes)
+module_immune_genes_df$Number_of_phagosome_genes <- get_num_genes_in_modules(geneInfo, significant_phagosome_genes)
+module_immune_genes_df$Number_of_SAG_genes <- get_num_genes_in_modules(geneInfo, eimeria_SAG_gene_ids, id_type = "entrez_id")
 
 
+i <- 0
+while (i < length(immune_cats)) {
+  i <- i + 1
+  cat_gene_IDs <- immune_classified_genes[immune_cats[i] == immune_classified_genes$Category,]$entrez_gene_id
+  j <- i + 8
+  module_immune_genes_df[,j] <- get_num_genes_in_modules(geneInfo, cat_gene_IDs, id_type = "entrez_id")
+}
 
-
-
-
-
-
-
-
-
-
-
-
+write.csv(module_immune_genes_df, "results/de_analysis/wgcna_module_go_kegg/module_immune_genes.csv")
 
 
 
