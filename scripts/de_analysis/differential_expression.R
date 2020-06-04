@@ -134,7 +134,9 @@ dev.off()
 
 mds_path <- "figures/sample_clustering/eimeria_mds.png"
 png(mds_path, height = 500, width = 800, pointsize = 16)
-plotMDS(eimeria_dgelist_filt_norm, labels = eimeria_dgelist_filt_norm$samples$group, main = "MDS plot of E. tenella samples")
+plotMDS(eimeria_dgelist_filt_norm, 
+        labels = eimeria_dgelist_filt_norm$samples$group, 
+        main = expression(bold(paste("MDS plot of ", bolditalic("E. tenella"), " samples"))))
 dev.off()
 
 # Check PCA plots of CPM values for each sample for outliers and other potential issues
@@ -145,9 +147,9 @@ pca_cpm_chicken <- prcomp(t(chicken_cpm))
 pca_cpm_eimeria <- prcomp(t(eimeria_cpm[,-11]))
 
 pca_path <- "figures/sample_clustering/chicken_pca.png"
-png(pca_path, height = 500, width = 500)
+png(pca_path, height = 500, width = 520)
 ggbiplot(pca_cpm_chicken, var.axes = FALSE, choices = 1:2, alpha = 1) +
-  geom_text(aes(label = chicken_dgelist_filt_norm$samples$group), hjust  =0.5, vjust = -0.5, size = 4.5) +
+  geom_text(aes(label = chicken_dgelist_filt_norm$samples$group), hjust = 0.5, vjust = -0.5, size = 4.5) +
   ggtitle("PCA of normalized chicken read counts per sample") +
   theme(plot.title = element_text(hjust = 0.5, size = 20),
         axis.title = element_text(size = 14),
@@ -155,10 +157,10 @@ ggbiplot(pca_cpm_chicken, var.axes = FALSE, choices = 1:2, alpha = 1) +
 dev.off()
 
 pca_path <- "figures/sample_clustering/eimeria_pca.png"
-png(pca_path, height = 500, width = 500)
+png(pca_path, height = 500, width = 520)
 ggbiplot(pca_cpm_eimeria, var.axes = FALSE, choices = 1:2, alpha = 1) +
   geom_text(aes(label = eimeria_dgelist_filt_norm$samples$group[-11]), hjust = 0.5, vjust = -0.5, size = 4.5) +
-  ggtitle("PCA of normalized E. tenella read counts per sample") +
+  ggtitle(expression(paste("PCA of normalized ", italic("E. tenella"), " read counts per sample"))) +
   theme(plot.title = element_text(hjust = 0.5, size = 20),
         axis.title = element_text(size = 14),
         axis.text = element_text(size = 12))
@@ -167,7 +169,6 @@ dev.off()
 # The chicken analysis design
 chicken_dgelist_filt_norm$samples$group <- relevel(chicken_dgelist_filt_norm$samples$group, ref="U.0")
 design_chicken <- model.matrix(~group, data = chicken_dgelist_filt_norm$samples)
-#design_chicken <- model.matrix(~infection_status+timepoint_chicken)
 rownames(design_chicken) <- colnames(chicken_dgelist_filt_norm)
 
 # Define the design of the eimeria analysis
@@ -230,12 +231,16 @@ while (i <= length(topgenes_chicken_list)) {
   png(volcano_path, height = 500, width = 800)
   p <- EnhancedVolcano(topgenes_chicken_list[[i]]$table,
                   lab = rownames(topgenes_chicken_list[[i]]$table),
-                  title = paste('Chicken in vitro', timepoints[i], "volcano plot"),
+                  title = paste('Chicken', timepoints[i], "volcano plot"),
                   subtitle = "",
                   x = 'logFC',
                   y = 'FDR',
                   xlim = c(-10,10),
                   ylim = c(0,10),
+                  ylab = bquote(~-Log[10]~italic(FDR)),
+                  legend = c("NS", "Log2 FC", "FDR", "FDR & Log2 FC"),
+                  legendLabels = c('NS', expression(Log[2]~FC),
+                                   "FDR", expression(FDR~and~log[2]~FC)),
                   pointSize = 4,
                   labSize = 5,
                   pCutoff = fdr_threshold,
@@ -259,12 +264,16 @@ while (i <= length(topgenes_eimeria_list)) {
   png(volcano_path, height = 500, width = 800)
   p <- EnhancedVolcano(topgenes_eimeria_list[[i]]$table,
                        lab = rownames(topgenes_eimeria_list[[i]]$table),
-                       title = paste('Eimeria in vitro', timepoints[i], "volcano plot"),
+                       title = bquote(bolditalic("E. tenella") ~ bold(.(timepoints[i]) ~ volcano~plot)),
                        subtitle = "",
                        x = 'logFC',
                        y = 'FDR',
                        xlim = c(-13, 13),
                        ylim = c(0, 40),
+                       ylab = bquote(~-Log[10]~italic(FDR)),
+                       legend = c("NS", "Log2 FC", "FDR", "FDR & Log2 FC"),
+                       legendLabels = c('NS', expression(Log[2]~FC),
+                                        "FDR", expression(FDR~and~log[2]~FC)),
                        pointSize = 4,
                        labSize = 5,
                        pCutoff = fdr_threshold,
@@ -759,7 +768,7 @@ plot_de_cat_genes <- function(de_cat_genes, experimental_conditions, plot_title,
       theme(plot.title = element_text(hjust = 0.5, size = 36),
             legend.title = element_text(size = 28),
             legend.text = element_text(size = 20),
-            axis.text = element_text(size = 16),
+            axis.text = element_text(size = 24),
             axis.title = element_text(size = 24)) +
       coord_cartesian(ylim = plot_scale, xlim = c(0, 80)) +
       labs(shape = "Below FDR threshold", color = "Gene symbol") +
@@ -786,11 +795,11 @@ plot_de_cat_genes <- function(de_cat_genes, experimental_conditions, plot_title,
     theme(plot.title = element_text(hjust = 0.5, size = 36),
           legend.title = element_text(size = 28),
           legend.text = element_text(size = 20),
-          axis.text = element_text(size = 16),
+          axis.text = element_text(size = 24),
           axis.title = element_text(size = 24)) +
     coord_cartesian(ylim = plot_scale, xlim = c(0, 80)) +
     labs(shape = "Below FDR threshold", color = "Gene symbol") +
-    xlab("Sample time points") + ylab("log2(Fold change)") +
+    xlab("Time post-infection [h]") + ylab("log2(Fold change)") +
     geom_hline(yintercept = 0)
   print(p)
   dev.off()
@@ -829,7 +838,7 @@ while (i < length(immune_cats)) {
   }
   cat_title <- paste("Immune category", immune_cats[i], "gene expression")
   cat_plot_path <- paste("figures/expression_line_plots/immune_cat_", gsub(" ", "_", gsub("/", "_", immune_cats[i])), ".png", sep = "")
-  cat_title <- gsub(" rec", " receptor", gsub("imm ", "immune ", cat_title))
+  cat_title <- gsub(" rec", " receptor", gsub("imm ", "immune ", gsub("IFN signal", "\"IFN signature\"", cat_title)))
   plot_de_cat_genes(cat_gene_list, c(2,4,12,24,48,72), cat_title, fdr_thresh = fdr_threshold, 
                     logfc_thresh = logfc_threshold, num_samples_fdr_thresh = 1, num_samples_logfc_thresh = 1,
                     cat_plot_path)
@@ -847,8 +856,6 @@ immune_genes <- c()
 while (i < length(go_immune_categories$child_go_id)) {
   i <- i + 1
   go_cat_list <- get_de_go_cat_genes(topgenes_chicken_list, go_immune_categories$child_go_id[i], egGO, egSYMBOL)
-  print(go_immune_categories$child_go_id[i])
-  print(go_cat_list[[1]])
   immune_genes <- c(immune_genes, go_cat_list[[1]]$gene_name)
 }
 
@@ -1111,14 +1118,14 @@ png("figures/eimeria_sample_fraction.png", width = 1200, height = 800)
 p <- ggplot(eimeria_perc_df, aes(x = timepoints, y = eimeria_perc)) +
   geom_line(size = 1.5) +
   geom_point(size = 5) +
-  coord_cartesian(xlim = c(0, 80)) +
+  coord_cartesian(xlim = c(0, 80), ylim = c(0.2, 5.4)) +
   scale_x_discrete(limits=eimeria_perc_df$timepoints) +
   theme_bw() +
-  ggtitle("E. tenella average sample fraction") +
+  ggtitle(expression(paste(italic("E. tenella"), " average sample fraction"))) +
   theme(plot.title = element_text(hjust = 0.5, size = 40),
-        axis.text = element_text(size = 20),
+        axis.text = element_text(size = 30),
         axis.title = element_text(size = 30)) +
-  xlab("Sample time points") + ylab("E tenella percentage")
+  xlab("Time post-infection [h]") + ylab("E tenella fraction [%]")
 print(p)
 dev.off()
 
@@ -1136,7 +1143,7 @@ SAG_gene_list <- lapply(SAG_gene_list, function(x) {colnames(x) <- c("entrez_gen
 SAG_gene_list <- lapply(SAG_gene_list, function(x) {x$gene_name <- eimeria_SAG_genes$product
                                                     return(x)})
 
-SAG_title <- "Eimeria SAG gene expression"
+SAG_title <- expression(paste(italic("E. tenella"), " SAG gene expression"))
 SAG_plot_path <- "figures/expression_line_plots/SAG_genes.png"
 plot_de_cat_genes(SAG_gene_list, c(2,4,12,24,48,72), SAG_title, fdr_thresh = fdr_threshold, 
                   logfc_thresh = logfc_threshold, num_samples_fdr_thresh = 1, num_samples_logfc_thresh = 1,

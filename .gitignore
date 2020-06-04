@@ -67,3 +67,5 @@ immune_classified_genes.csv
 geneInfo_fusion_annotated.csv
 
 .~lock.immune_classified_genes.csv#
+
+assembly_graph.fastg
