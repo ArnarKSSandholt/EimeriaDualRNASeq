@@ -8,9 +8,9 @@ import sys
 import re
 
 # Read in the input and output paths from stdin and define folders for the output
-metadata_path = sys.argv[1]
-read_count_path = sys.argv[2]
-output_path = sys.argv[3]
+#metadata_path = sys.argv[1]
+read_count_path = sys.argv[1]
+output_path = sys.argv[2]
 mkdir(output_path+"/chicken")
 mkdir(output_path+"/eimeria")
 mkdir(output_path+"/stats")
@@ -18,8 +18,8 @@ mkdir(output_path+"/stats")
 # Read in the data
 read_count_filenames = listdir(read_count_path)
 read_count_filenames.sort()
-metadata_table = pd.read_csv(metadata_path, sep="\t")
-metadata_table = metadata_table.sort_values("File_name")
+#metadata_table = pd.read_csv(metadata_path, sep="\t")
+#metadata_table = metadata_table.sort_values("File_name")
 result_list = []
 old_name = ""
 
@@ -65,5 +65,6 @@ while i < len(read_count_filenames):
 header_list = ["File_name","Total_number_of_mapped_reads", "Number_of_reads_mapped_to_chicken", "Number_of_reads_mapped_to_Eimeria", \
     "Percentage_of_Eimeria_reads", "Number_of_read_not_mapped_to_feature", "Number_of_reads_mapped_to_multiple_features"]
 data_table = pd.DataFrame(result_list, columns=header_list)
-out_table = pd.merge(metadata_table, data_table, on = "File_name")
-out_table.to_csv(output_path+"/metadata_table.csv", sep = ",", index = False)
+data_table.to_csv(output_path+"/metadata_table_short.csv", sep = ",", index = False)
+#out_table = pd.merge(metadata_table, data_table, on = "File_name")
+#out_table.to_csv(output_path+"/metadata_table.csv", sep = ",", index = False)

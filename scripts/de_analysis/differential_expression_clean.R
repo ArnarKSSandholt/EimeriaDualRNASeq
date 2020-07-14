@@ -5,10 +5,8 @@ library(EnhancedVolcano)
 library(org.Gg.eg.db)
 library(GO.db)
 library(ggplot2)
-library(svglite)
 library(ggbiplot)
 library(KEGGREST)
-library(metacoder)
 library(WGCNA)
 library(gplots)
 library(pals)
@@ -62,47 +60,6 @@ ggbiplot(pca_eimeria, var.axes = FALSE) + coord_cartesian(xlim = c(0, 60)) +
   labs(title = "PCA of normalized E. tenella read counts per gene") +
   theme(plot.title = element_text(hjust = 0.5))
 
-# Investigate eimeria outliers
-df1 <- data.frame(groups=group_eimeria,log10_cpm_counts=log(eimeria_cpm_raw["25249494",], base = 10))
-df1_mean <- aggregate(x = df1$log10_cpm_counts, by = list(df1$groups), mean)
-colnames(df1_mean) <- colnames(df1)
-df2 <- data.frame(groups=group_eimeria,log10_cpm_counts=log(eimeria_cpm_raw["25252472",], base = 10))
-df2_mean <- aggregate(x = df2$log10_cpm_counts, by = list(df2$groups), mean)
-colnames(df2_mean) <- colnames(df2)
-df3 <- data.frame(groups=group_eimeria,log10_cpm_counts=log(eimeria_cpm_raw["25250679",], base = 10))
-df3_mean <- aggregate(x = df3$log10_cpm_counts, by = list(df3$groups), mean)
-colnames(df3_mean) <- colnames(df3)
-df4 <- data.frame(groups=group_eimeria,log10_cpm_counts=log(eimeria_cpm_raw["25253446",], base = 10))
-df4_mean <- aggregate(x = df4$log10_cpm_counts, by = list(df4$groups), mean)
-colnames(df4_mean) <- colnames(df4)
-df5 <- data.frame(groups=group_chicken,log10_cpm_counts=log(chicken_cpm_raw["112533599",], base = 10))
-df5_mean <- aggregate(x = df5$log10_cpm_counts, by = list(df5$groups), mean)
-colnames(df5_mean) <- colnames(df5)
-df6 <- data.frame(groups=group_chicken,log10_cpm_counts=log(chicken_cpm_raw["770705",], base = 10))
-df6_mean <- aggregate(x = df6$log10_cpm_counts, by = list(df6$groups), mean)
-colnames(df6_mean) <- colnames(df6)
-
-ggplot(data=df1_mean, aes(x=groups, y=log10_cpm_counts)) +
-  geom_bar(stat="identity") +
-  coord_cartesian(ylim = c(0, 6))
-ggplot(data=df2_mean, aes(x=groups, y=log10_cpm_counts)) +
-  geom_bar(stat="identity") +
-  coord_cartesian(ylim = c(0, 6))
-ggplot(data=df3_mean, aes(x=groups, y=log10_cpm_counts)) +
-  geom_bar(stat="identity") +
-  coord_cartesian(ylim = c(0, 6))
-ggplot(data=df4_mean, aes(x=groups, y=log10_cpm_counts)) +
-  geom_bar(stat="identity") +
-  coord_cartesian(ylim = c(0, 6))
-ggplot(data=df5_mean, aes(x=groups, y=log10_cpm_counts)) +
-  geom_bar(stat="identity") +
-  coord_cartesian(ylim = c(0, 6)) +
-  scale_x_discrete(limits=c("U.0","U.2","I.2","U.4","I.4","U.12","I.12","U.24","I.24","U.48","I.48","U.72","I.72"))
-ggplot(data=df6_mean, aes(x=groups, y=log10_cpm_counts)) +
-  geom_bar(stat="identity") +
-  coord_cartesian(ylim = c(0, 6)) +
-  scale_x_discrete(limits=c("U.0","U.2","I.2","U.4","I.4","U.12","I.12","U.24","I.24","U.48","I.48","U.72","I.72"))
-
 # Create the DGElist object containing the count data in a format that edgeR can work with
 chicken_dgelist <- DGEList(counts = chicken_reads[,3:length(chicken_reads)], genes = chicken_reads[,c(1,2)], group = group_chicken)
 eimeria_dgelist <- DGEList(counts = eimeria_reads[,3:length(eimeria_reads)], genes = eimeria_reads[,c(1,2)], group = group_eimeria)
@@ -125,78 +82,21 @@ chicken_dgelist_filt_norm <- calcNormFactors(chicken_dgelist_filt)
 eimeria_dgelist_filt_norm <- calcNormFactors(eimeria_dgelist_filt)
 
 # Check MDS plots of logFC values for outliers or other potential issues
-#chicken_labels <- paste(rownames(chicken_dgelist_filt_norm$samples), chicken_dgelist_filt_norm$samples$group, sep = "_")
-#eimeria_labels <- paste(rownames(eimeria_dgelist_filt_norm$samples), eimeria_dgelist_filt_norm$samples$group, sep = "_")
-
-mds_path <- "figures/sample_clustering/mds_plots.png"
-png(mds_path, height = 1200, width = 800, pointsize = 16)
-par(mfrow=c(2,1))
-p_chicken <- plotMDS(chicken_dgelist_filt_norm, 
-        labels = chicken_dgelist_filt_norm$samples$group)
-p_eimeria <- plotMDS(eimeria_dgelist_filt_norm, 
-        labels = eimeria_dgelist_filt_norm$samples$group)
+mds_path <- "figures/sample_clustering/chicken_mds.png"
+png(mds_path, height = 500, width = 800, pointsize = 16)
+plotMDS(chicken_dgelist_filt_norm, labels = chicken_dgelist_filt_norm$samples$group, main = "MDS plot of chicken samples")
 dev.off()
 
-chicken_mds_df <- data.frame(x = p_chicken$x, 
-                             y = p_chicken$y, 
-                             labels = as.character(chicken_dgelist_filt_norm$samples$group), 
-                             infection_label = rep("", length(p_chicken$x)), 
-                             stringsAsFactors = FALSE)
-i <- 0
-while (i < dim(chicken_mds_df)[1]) {
-  i <- i + 1
-  chicken_mds_df$infection_label[i] <- substr(chicken_mds_df$labels[i], 1, 1)
-  chicken_mds_df$labels[i] <- substr(chicken_mds_df$labels[i], 3, nchar(chicken_mds_df$labels[i]))
-}
-
-p_chicken_gg <- ggplot(chicken_mds_df, aes(x = x, y = y, color = infection_label)) +
-  geom_text(aes(label = labels), hjust = 0.5, vjust = -1, size = 4.5) +
-  geom_point(size = 5) +
-  scale_color_manual(values = c("black", "grey50")) +
-  theme_bw() +
-  coord_cartesian(ylim = c(-1.8, 1.3)) +
-  xlab("Leading logFC dim 1") +
-  ylab("Leading logFC dim 2") +
-  theme(axis.text = element_text(size = 24),
-        axis.title = element_text(size = 24),
-        legend.position = "none")
-
-eimeria_mds_df <- data.frame(x = p_eimeria$x, 
-                             y = p_eimeria$y, 
-                             labels = as.character(eimeria_dgelist_filt_norm$samples$group),
-                             stringsAsFactors = FALSE)
-
-p_eimeria_gg <- ggplot(eimeria_mds_df, aes(x = x, y = y)) +
-  geom_text(aes(label = labels), hjust = 0.5, vjust = -1, size = 4.5) +
-  geom_point(size = 5) +
-  theme_bw() +
-  coord_cartesian(ylim = c(-1.5, 2.2)) +
-  xlab("Leading logFC dim 1") +
-  ylab("Leading logFC dim 2") +
-  theme(axis.text = element_text(size = 24),
-        axis.title = element_text(size = 24))
-
-mds_path <- "figures/sample_clustering/mds_plots.pdf"
-pdf(mds_path, height = 16, width = 12)
-multiplot(plotlist = list(p_chicken_gg, p_eimeria_gg), layout = matrix(c(1,2), nrow = 2, byrow = TRUE))
+mds_path <- "figures/sample_clustering/eimeria_mds.png"
+png(mds_path, height = 500, width = 800, pointsize = 16)
+plotMDS(eimeria_dgelist_filt_norm, 
+        labels = eimeria_dgelist_filt_norm$samples$group, 
+        main = expression(bold(paste("MDS plot of ", bolditalic("E. tenella"), " samples"))))
 dev.off()
 
 # Check PCA plots of CPM values for each sample for outliers and other potential issues
 chicken_cpm <- cpm.DGEList(chicken_dgelist_filt_norm)
 eimeria_cpm <- cpm.DGEList(eimeria_dgelist_filt_norm)
-
-chicken_cpm_df <- data.frame(chicken_cpm, check.names = FALSE)
-m <- match(rownames(chicken_cpm_df), chicken_reads$gene_name)
-chicken_cpm_df$entrez_gene_id <- chicken_reads$entrez_gene_id[m]
-chicken_cpm_df <- chicken_cpm_df[,c(39,1:38)]
-
-eimeria_cpm_df <- data.frame(eimeria_cpm, check.names = FALSE)
-m <- match(rownames(eimeria_cpm_df), eimeria_reads$locus_tag)
-eimeria_cpm_df$entrez_gene_id <- eimeria_reads$entrez_gene_id[m]
-eimeria_cpm_df <- eimeria_cpm_df[,c(20,1:19)]
-
-write.csv(chicken_cpm_df, file = "GEO_data/processed_data/chicken_counts_norm.csv")
-write.csv(eimeria_cpm_df, file = "GEO_data/processed_data/eimeria_counts_norm.csv")
 
 pca_cpm_chicken <- prcomp(t(chicken_cpm))
 pca_cpm_eimeria <- prcomp(t(eimeria_cpm[,-11]))
@@ -255,7 +155,7 @@ qlf_chicken_UI.48 <- glmQLFTest(fit_chicken, contrast = contrasts_chicken[,"UI.4
 qlf_chicken_UI.72 <- glmQLFTest(fit_chicken, contrast = contrasts_chicken[,"UI.72"])
 
 chicken_qlf_list <- list(qlf_chicken_UI.2,qlf_chicken_UI.4,qlf_chicken_UI.12,qlf_chicken_UI.24,
-                      qlf_chicken_UI.48,qlf_chicken_UI.72)
+                         qlf_chicken_UI.48,qlf_chicken_UI.72)
 topgenes_chicken_list <- lapply(chicken_qlf_list,
                                 function(x) topTags(x, n = dim(chicken_qlf_list[[1]]$table)[1]))
 
@@ -271,7 +171,7 @@ qlf_eimeria_72 <- glmQLFTest(fit_eimeria, coef = 7)
 qlf_eimeria_all <- glmQLFTest(fit_eimeria, coef = 2:7)
 
 eimeria_qlf_list <- list(qlf_eimeria_2,qlf_eimeria_4,qlf_eimeria_12,qlf_eimeria_24,qlf_eimeria_48,
-                      qlf_eimeria_72)
+                         qlf_eimeria_72)
 topgenes_eimeria_list <- lapply(eimeria_qlf_list,
                                 function(x) topTags(x, n = dim(eimeria_qlf_list[[1]]$table)[1]))
 
@@ -284,26 +184,24 @@ timepoints <- c("2h","4h","12h","24h","48h","72h")
 plot_list <- list()
 i = 1
 while (i <= length(topgenes_chicken_list)) {
-  volcano_path <- paste("figures/volcano_plots/chicken_volcano_", timepoints[i], ".pdf", sep = "")
-  pdf(volcano_path, height = 10, width = 16)
+  volcano_path <- paste("figures/volcano_plots/chicken_volcano_", timepoints[i], ".png", sep = "")
+  png(volcano_path, height = 500, width = 800)
   p <- EnhancedVolcano(topgenes_chicken_list[[i]]$table,
-                  lab = rownames(topgenes_chicken_list[[i]]$table),
-                  selectLab = c(1),
-                  title = timepoints[i],
-                  subtitle = "",
-                  x = 'logFC',
-                  y = 'FDR',
-                  xlim = c(-10,10),
-                  ylim = c(0,10),
-                  ylab = bquote(~-Log[10]~italic(FDR)),
-                  legend = c("NS", "Log2 FC", "FDR", "FDR & Log2 FC"),
-                  legendLabels = c('NS', expression(Log[2]~FC),
-                                   "FDR", expression(FDR~and~log[2]~FC)),
-                  caption = "",
-                  pointSize = 4,
-                  labSize = 5,
-                  pCutoff = fdr_threshold,
-                  FCcutoff = logfc_threshold) +
+                       lab = rownames(topgenes_chicken_list[[i]]$table),
+                       title = paste('Chicken', timepoints[i], "volcano plot"),
+                       subtitle = "",
+                       x = 'logFC',
+                       y = 'FDR',
+                       xlim = c(-10,10),
+                       ylim = c(0,10),
+                       ylab = bquote(~-Log[10]~italic(FDR)),
+                       legend = c("NS", "Log2 FC", "FDR", "FDR & Log2 FC"),
+                       legendLabels = c('NS', expression(Log[2]~FC),
+                                        "FDR", expression(FDR~and~log[2]~FC)),
+                       pointSize = 4,
+                       labSize = 5,
+                       pCutoff = fdr_threshold,
+                       FCcutoff = logfc_threshold) +
     theme(plot.title = element_text(hjust = 0.5, size = 20),
           plot.subtitle = element_text(hjust = 0.5, size = 16),
           legend.text = element_text(size = 16))
@@ -314,34 +212,25 @@ while (i <= length(topgenes_chicken_list)) {
 }
 volcano_path <- "figures/volcano_plots/all_chicken_plots.png"
 png(volcano_path, height = 1200, width = 1200)
-multiplot(plotlist = plot_list, layout = matrix(c(1,2,3,4,5,6), nrow = 3, byrow = TRUE))
-dev.off()
-
-volcano_path <- "figures/volcano_plots/all_chicken_plots.pdf"
-pdf(volcano_path, height = 20, width = 20)
-multiplot(plotlist = plot_list, layout = matrix(c(1,2,3,4,5,6), nrow = 3, byrow = TRUE))
+multiplot(plotlist = plot_list, cols = 2)
 dev.off()
 
 i = 1
 while (i <= length(topgenes_eimeria_list)) {
-  volcano_path <- paste("figures/volcano_plots/eimeria_volcano_", timepoints[i], ".pdf", sep = "")
-  pdf(volcano_path, height = 10, width = 16)
+  volcano_path <- paste("figures/volcano_plots/eimeria_volcano_", timepoints[i], ".png", sep = "")
+  png(volcano_path, height = 500, width = 800)
   p <- EnhancedVolcano(topgenes_eimeria_list[[i]]$table,
                        lab = rownames(topgenes_eimeria_list[[i]]$table),
-                       selectLab = c(1),
-                       title = timepoints[i],
+                       title = bquote(bolditalic("E. tenella") ~ bold(.(timepoints[i]) ~ volcano~plot)),
                        subtitle = "",
                        x = 'logFC',
                        y = 'FDR',
                        xlim = c(-13, 13),
                        ylim = c(0, 40),
                        ylab = bquote(~-Log[10]~italic(FDR)),
-                       #legendVisible = FALSE,
                        legend = c("NS", "Log2 FC", "FDR", "FDR & Log2 FC"),
                        legendLabels = c('NS', expression(Log[2]~FC),
                                         "FDR", expression(FDR~and~log[2]~FC)),
-                       caption = "",
-                       #col = c("grey", "grey60", "grey30", "black"),
                        pointSize = 4,
                        labSize = 5,
                        pCutoff = fdr_threshold,
@@ -356,13 +245,9 @@ while (i <= length(topgenes_eimeria_list)) {
 }
 volcano_path <- "figures/volcano_plots/all_eimeria_plots.png"
 png(volcano_path, height = 1200, width = 1200)
-multiplot(plotlist = plot_list, layout = matrix(c(1,2,3,4,5,6), nrow = 3, byrow = TRUE))
+multiplot(plotlist = plot_list, cols = 2)
 dev.off()
 
-volcano_path <- "figures/volcano_plots/all_eimeria_plots.pdf"
-pdf(volcano_path, height = 20, width = 20)
-multiplot(plotlist = plot_list, layout = matrix(c(1,2,3,4,5,6), nrow = 3, byrow = TRUE))
-dev.off()
 
 # Compute the number of unique genes differentially expressed at each time point for both datasets, which genes they are and
 # which genes are differentially expressed at all time points
@@ -422,7 +307,8 @@ unique_eimeria_de_genes_pos <- get_unique_and_shared_de_genes(de_genes_eimeria_p
 unique_eimeria_de_genes_neg <- get_unique_and_shared_de_genes(de_genes_eimeria_neg, 2)
 unique_eimeria_de_genes_all <- get_unique_and_shared_de_genes(de_genes_eimeria_all, 2)
 
-# Get a list of all genes that are significantly DE at any timepoint and a list of those that are DE and have a logFC > 1
+# Get a list of all genes that are significantly DE at any timepoint and a list of those that are DE and 
+# have a logFC > 1
 egGENENAME <- toTable(org.Gg.egGENENAME)
 i <- 0
 while (i < length(de_genes_chicken)) {
@@ -614,118 +500,68 @@ while (i < length(topgo_chicken_all_list)) {
 
 
 # GO and KEGG category heatmaps
-create_cat_pval_df <- function(cat_list, cat_name, timepoints) {
-  # cat_name_col is a vector containing names of categories
-  cat_pval_up_df <- as.data.frame(matrix(0,
-                                         ncol = length(cat_list),
-                                         nrow = dim(cat_list[[1]])[1]))
-  cat_pval_down_df <- as.data.frame(matrix(0,
-                                           ncol = length(cat_list),
-                                           nrow = dim(cat_list[[1]])[1]))
-  cat_pval_mix_df <- as.data.frame(matrix(0,
-                                          ncol = length(cat_list),
-                                          nrow = dim(cat_list[[1]])[1]))
-  colnames(cat_pval_up_df) <- timepoints
-  colnames(cat_pval_down_df) <- timepoints
-  colnames(cat_pval_mix_df) <- timepoints
-  
-  rownames(cat_pval_up_df) <- cat_name
-  rownames(cat_pval_down_df) <- cat_name
-  rownames(cat_pval_mix_df) <- cat_name
-  
-  i <- 0
-  while (i < length(cat_list)) {
-    i <- i + 1
-    cat_pval_up_df[,i] <- -log10(cat_list[[i]]$P.Up)
-    cat_pval_down_df[,i] <- -log10(cat_list[[i]]$P.Down)
-  }
-  
-  i <- 0
-  while (i < dim(cat_pval_up_df)[1]) {
-    i <- i + 1
-    j <- 0
-    while (j < dim(cat_pval_up_df)[2]) {
-      j <- j + 1
-      if (cat_pval_up_df[i,j] >= cat_pval_down_df[i,j]) {
-        cat_pval_mix_df[i,j] <- cat_pval_up_df[i,j]
-      } else {
-        cat_pval_mix_df[i,j] <- -cat_pval_down_df[i,j]
-      }
-    }
-  }
-  return(list(cat_pval_up_df, cat_pval_down_df, cat_pval_mix_df))
-}
-
-remove_high_pval_rows <- function(pval_df, pval_thresh) {
-  pval_thresh <- -log10(pval_thresh)
-  i <- 1
-  while (i <= dim(pval_df)[1]) {
-    num_high_pval <- 0
-    j <- 0
-    while (j < dim(pval_df)[2]) {
-      j <- j + 1
-      if (pval_df[i,j] < pval_thresh) {
-        num_high_pval <- num_high_pval + 1
-      }
-    }
-    if (num_high_pval == j) {
-      pval_df <- pval_df[-i,]
-    } else {
-      i <- i + 1
-    }
-  }
-  return(pval_df)
-}
-
-go_chicken_pval_list <- create_cat_pval_df(go_chicken_list, go_chicken_list[[1]]$Term, timepoints)
-kegg_chicken_pval_list <- create_cat_pval_df(kegg_chicken_list, kegg_chicken_list[[1]]$Pathway, timepoints)
-
-go_chicken_pval_list_filtered <- lapply(go_chicken_pval_list, function(x) remove_high_pval_rows(x, fdr_threshold/10))
-kegg_chicken_pval_list_filtered <- lapply(kegg_chicken_pval_list, function(x) remove_high_pval_rows(x, fdr_threshold))
-
-heatmap_path <- "figures/heatmaps/GO_cat_upregulated.pdf"
-pdf(heatmap_path, width = 60, height = 180, pointsize = 60)
-aspectHeatmap(as.matrix(go_chicken_pval_list_filtered[[1]]), Colv = NA,
-              xlab = "Timepoints", main = "Upregulated GO categories", 
-              hExp = 5, wExp = 0.8, col = colorRampPalette(brewer.pal(9, "YlOrRd"))(50))
-dev.off()
-heatmap_path <- "figures/heatmaps/GO_cat_downregulated.pdf"
-pdf(heatmap_path, width = 140, height = 180, pointsize = 100)
-aspectHeatmap(as.matrix(go_chicken_pval_list_filtered[[2]]), Colv = NA,
-        xlab = "Timepoints", main = "Downregulated GO categories", 
-        hExp = 2, wExp = 0.7, col = colorRampPalette(brewer.pal(9, "YlOrRd"))(50))
-dev.off()
-
-col_breaks <- c(seq(-10,-3,length = 15), seq(-2.95, 2.95, length = 119), seq(3,10,length = 15))
-col_palette <- colorRampPalette(c("red", "white", "blue"))(n = 148)
-
-heatmap_path <- "figures/heatmaps/GO_cat_mixed.pdf"
-pdf(heatmap_path, width = 110, height = 70, pointsize = 60)
-heatmap.2(as.matrix(go_chicken_pval_list_filtered[[3]]), Colv = FALSE, dendrogram = "row", col = col_palette, breaks = col_breaks,
-        xlab = "Timepoints", main = "GO categories",cexRow=0.7,cexCol=1,margins=c(5,12),trace="none",srtCol=45,key = FALSE)
-dev.off()
-
-heatmap_path <- "figures/heatmaps/KEGG_cat_upregulated.pdf"
-pdf(heatmap_path, width = 130, height = 120, pointsize = 120)
-aspectHeatmap(as.matrix(kegg_chicken_pval_list_filtered[[1]]), Colv = NA,
-              xlab = "Timepoints", main = "Upregulated KEGG categories", 
-              wExp = 0.7, col = colorRampPalette(brewer.pal(9, "YlOrRd"))(50))
-dev.off()
-heatmap_path <- "figures/heatmaps/KEGG_cat_downregulated.pdf"
-pdf(heatmap_path, width = 100, height = 100, pointsize = 100)
-aspectHeatmap(as.matrix(kegg_chicken_pval_list_filtered[[2]]), Colv = NA,
-              xlab = "Timepoints", main = "Downregulated KEGG categories", 
-              hExp = 2, col = colorRampPalette(brewer.pal(9, "YlOrRd"))(50))
-dev.off()
-
-col_breaks <- c(seq(-10,-5,length = 11), seq(-4.95, 4.95, length = 199), seq(5,10,length = 11))
-col_palette <- colorRampPalette(c("red", "white", "blue"))(n = 220)
-
-heatmap_path <- "figures/heatmaps/KEGG_cat_mixed.pdf"
-pdf(heatmap_path, width = 110, height = 70, pointsize = 100)
-heatmap.2(as.matrix(kegg_chicken_pval_list_filtered[[3]]), Colv = FALSE, dendrogram = "row", col = col_palette, breaks = col_breaks,
-          xlab = "Timepoints", main = "KEGG categories",cexRow=0.7,cexCol=1,margins=c(5,12),trace="none",srtCol=45)
-dev.off()
+# create_cat_pval_df <- function(cat_list, cat_name, timepoints) {
+#   # cat_name_col is a vector containing names of categories
+#   cat_pval_up_df <- as.data.frame(matrix(0,
+#                                          ncol = length(cat_list),
+#                                          nrow = dim(cat_list[[1]])[1]))
+#   cat_pval_down_df <- as.data.frame(matrix(0,
+#                                            ncol = length(cat_list),
+#                                            nrow = dim(cat_list[[1]])[1]))
+#   cat_pval_mix_df <- as.data.frame(matrix(0,
+#                                           ncol = length(cat_list),
+#                                           nrow = dim(cat_list[[1]])[1]))
+#   colnames(cat_pval_up_df) <- timepoints
+#   colnames(cat_pval_down_df) <- timepoints
+#   colnames(cat_pval_mix_df) <- timepoints
+#   
+#   rownames(cat_pval_up_df) <- cat_name
+#   rownames(cat_pval_down_df) <- cat_name
+#   rownames(cat_pval_mix_df) <- cat_name
+#   
+#   i <- 0
+#   while (i < length(cat_list)) {
+#     i <- i + 1
+#     cat_pval_up_df[,i] <- -log10(cat_list[[i]]$P.Up)
+#     cat_pval_down_df[,i] <- -log10(cat_list[[i]]$P.Down)
+#   }
+#   
+#   i <- 0
+#   while (i < dim(cat_pval_up_df)[1]) {
+#     i <- i + 1
+#     j <- 0
+#     while (j < dim(cat_pval_up_df)[2]) {
+#       j <- j + 1
+#       if (cat_pval_up_df[i,j] >= cat_pval_down_df[i,j]) {
+#         cat_pval_mix_df[i,j] <- cat_pval_up_df[i,j]
+#       } else {
+#         cat_pval_mix_df[i,j] <- -cat_pval_down_df[i,j]
+#       }
+#     }
+#   }
+#   return(list(cat_pval_up_df, cat_pval_down_df, cat_pval_mix_df))
+# }
+# 
+# remove_high_pval_rows <- function(pval_df, pval_thresh) {
+#   pval_thresh <- -log10(pval_thresh)
+#   i <- 1
+#   while (i <= dim(pval_df)[1]) {
+#     num_high_pval <- 0
+#     j <- 0
+#     while (j < dim(pval_df)[2]) {
+#       j <- j + 1
+#       if (pval_df[i,j] < pval_thresh) {
+#         num_high_pval <- num_high_pval + 1
+#       }
+#     }
+#     if (num_high_pval == j) {
+#       pval_df <- pval_df[-i,]
+#     } else {
+#       i <- i + 1
+#     }
+#   }
+#   return(pval_df)
+# }
 
 # Get a lsit of genes that belong to each GO category of interest
 get_de_go_cat_genes <- function(de_gene_list, go_id, database_go, database_symbols) {
@@ -765,8 +601,8 @@ plot_de_cat_genes <- function(de_cat_genes, experimental_conditions, plot_title,
   i <- 1
   j <- 1
   de_cat_gene_df <- as.data.frame(matrix(0, 
-                                            ncol = dim(de_cat_genes[[1]])[2], 
-                                            nrow = dim(de_cat_genes[[1]])[1]*length(de_cat_genes)))
+                                         ncol = dim(de_cat_genes[[1]])[2], 
+                                         nrow = dim(de_cat_genes[[1]])[1]*length(de_cat_genes)))
   colnames(de_cat_gene_df) <- colnames(de_cat_genes[[1]])
   num_conditions <- length(de_cat_genes)
   num_genes <- dim(de_cat_genes[[1]])[1]
@@ -828,26 +664,21 @@ plot_de_cat_genes <- function(de_cat_genes, experimental_conditions, plot_title,
     
     de_cat_gene_df$gene_timepoints <- rep(experimental_conditions, curr_num_genes)
     cat_plot_path <- gsub(".png", "_1.png", cat_plot_path)
-    plot_colors <- as.vector(polychrome(curr_num_genes))
-    plot_colors[2] <- "#b3b3b3ff"
-    if (FALSE %in% de_cat_gene_df$below_fdr_threshold) {
-      shapes <- c(1,17)
-    } else{
-      shapes <- 17
-    }
     png(cat_plot_path, width = 1200, height = 800)
     p <- ggplot(de_cat_gene_df, aes(x=gene_timepoints, y=logFC, group=gene_name)) +
       geom_line(aes(color = gene_name), size = 1.5) +
-      scale_color_manual(values = plot_colors) +
+      scale_color_manual(values = as.vector(polychrome(curr_num_genes))) +
       geom_point(aes(shape=below_fdr_threshold, color = gene_name), size = 5) +
-      scale_shape_manual(values = shapes) +
+      scale_shape_manual(values = c(1,17)) +
       scale_x_discrete(limits=experimental_conditions) +
       theme_bw() +
-      theme(legend.title = element_text(size = 28),
+      ggtitle(plot_title) +
+      theme(plot.title = element_text(hjust = 0.5, size = 36),
+            legend.title = element_text(size = 28),
             legend.text = element_text(size = 20),
             axis.text = element_text(size = 24),
             axis.title = element_text(size = 24)) +
-      guides(color = guide_legend(order = 1, override.aes = list(shape = 17)),
+      guides(color = guide_legend(order = 1),
              shape = guide_legend(order = 2)) +
       coord_cartesian(ylim = plot_scale, xlim = c(0, 80)) +
       labs(shape = "Below FDR threshold", color = "Gene symbol") +
@@ -860,31 +691,23 @@ plot_de_cat_genes <- function(de_cat_genes, experimental_conditions, plot_title,
     de_cat_gene_df <- de_cat_gene_df_list[[2]]
     curr_num_genes <- dim(de_cat_gene_df)[1]/num_conditions
   }
-    
+  
   de_cat_gene_df$gene_timepoints <- rep(experimental_conditions, curr_num_genes)
-  plot_colors <- as.vector(polychrome(curr_num_genes))
-  plot_colors[2] <- "#b3b3b3ff"
-  if (FALSE %in% de_cat_gene_df$below_fdr_threshold) {
-    shapes <- c(1,17)
-  } else{
-    shapes <- 17
-  }
   png(cat_plot_path, width = 1200, height = 800)
   p <- ggplot(de_cat_gene_df, aes(x=gene_timepoints, y=logFC, group=gene_name)) +
     geom_line(aes(color = gene_name), size = 1.5) +
-    scale_color_manual(values = plot_colors) +
+    scale_color_manual(values = as.vector(polychrome(curr_num_genes))) +
     geom_point(aes(shape=below_fdr_threshold, color = gene_name), size = 5) +
-    scale_shape_manual(values = shapes) +
+    scale_shape_manual(values = c(1,17)) +
     scale_x_discrete(limits=experimental_conditions) +
     theme_bw() +
-    theme(legend.title = element_text(size = 28),
+    ggtitle(plot_title) +
+    theme(plot.title = element_text(hjust = 0.5, size = 36),
+          legend.title = element_text(size = 28),
           legend.text = element_text(size = 20),
           axis.text = element_text(size = 24),
-          axis.title = element_text(size = 24),
-          legend.position = c(0.5,0.5),
-          legend.box = "horizontal",
-          legend.box.margin = margin(5, 5, 5, 5, "cm")) +
-    guides(color = guide_legend(order = 1, override.aes = list(shape = 17)),
+          axis.title = element_text(size = 24)) +
+    guides(color = guide_legend(order = 1),
            shape = guide_legend(order = 2)) +
     coord_cartesian(ylim = plot_scale, xlim = c(0, 80)) +
     labs(shape = "Below FDR threshold", color = "Gene symbol") +
@@ -892,7 +715,6 @@ plot_de_cat_genes <- function(de_cat_genes, experimental_conditions, plot_title,
     geom_hline(yintercept = 0)
   print(p)
   dev.off()
-  return(p)
 }
 
 # Plot a lineplot showing log fold change in each sample for the genes in the toll like KEGG pathway
@@ -913,7 +735,6 @@ path_to_immuno_gene_list <- "immune_classified_genes.csv"
 immune_classified_genes <- read.delim(path_to_immuno_gene_list, check.names=FALSE, stringsAsFactors=FALSE)
 immune_cats <- unique(immune_classified_genes$Category)
 
-plot_list <- list()
 i <- 0
 while (i < length(immune_cats)) {
   i <- i + 1
@@ -930,25 +751,10 @@ while (i < length(immune_cats)) {
   cat_title <- paste("Immune category", immune_cats[i], "gene expression")
   cat_plot_path <- paste("figures/expression_line_plots/immune_cat_", gsub(" ", "_", gsub("/", "_", immune_cats[i])), ".png", sep = "")
   cat_title <- gsub(" rec", " receptor", gsub("imm ", "immune ", gsub("IFN signal", "\"IFN signature\"", cat_title)))
-  plot_list[[i]] <- plot_de_cat_genes(cat_gene_list, c(2,4,12,24,48,72), cat_title, fdr_thresh = fdr_threshold, 
+  plot_de_cat_genes(cat_gene_list, c(2,4,12,24,48,72), cat_title, fdr_thresh = fdr_threshold, 
                     logfc_thresh = logfc_threshold, num_samples_fdr_thresh = 1, num_samples_logfc_thresh = 1,
                     cat_plot_path)
 }
-
-line_multiplot_path <- "figures/expression_line_plots/immune_cat_multi_mrc_prr.pdf"
-pdf(line_multiplot_path, height = 16, width = 12)
-multiplot(plotlist = list(plot_list[[10]], plot_list[[13]]), layout = matrix(c(1,2), nrow = 2, byrow = TRUE))
-dev.off()
-
-line_multiplot_path <- "figures/expression_line_plots/immune_cat_multi_chemo_cyto.pdf"
-pdf(line_multiplot_path, height = 16, width = 12)
-multiplot(plotlist = list(plot_list[[3]], plot_list[[5]]), layout = matrix(c(1,2), nrow = 2, byrow = TRUE))
-dev.off()
-
-line_multiplot_path <- "figures/expression_line_plots/immune_cat_multi_ifn_integrin.pdf"
-pdf(line_multiplot_path, height = 16, width = 12)
-multiplot(plotlist = list(plot_list[[8]], plot_list[[9]]), layout = matrix(c(1,2), nrow = 2, byrow = TRUE))
-dev.off()
 
 kegg_immune_categories <- c("path:gga04640", "path:gga04610", "path:gga04611", "path:gga04620", "path:gga04624", "path:gga04621",
                             "path:gga04622", "path:gga04623", "path:gga04625", "path:gga04650", "path:gga04612", "path:gga04660",
@@ -983,7 +789,6 @@ chicken_immune_gene_logfc_df <- chicken_logfc_df[m,]
 m <- match(immune_genes, rownames(chicken_logfc_df_filt))
 m <- m[complete.cases(m)]
 chicken_immune_gene_logfc_df_filt <- chicken_logfc_df_filt[m,]
-write.csv(chicken_immune_gene_logfc_df_filt, file = "figures/heatmaps/chicken_immune_genes_logfc_filt.csv")
 
 heatmap_path <- "figures/heatmaps/chicken_immune_genes_logfc.png"
 png(heatmap_path, width = 1500, height = 2000, pointsize = 100)
@@ -996,22 +801,11 @@ dev.off()
 heatmap_path <- "figures/heatmaps/chicken_immune_genes_logfc_filt.png"
 png(heatmap_path, width = 1000, height = 1600, pointsize = 20)
 aspectHeatmap(as.matrix(chicken_immune_gene_logfc_df_filt), Colv = NA,
-              xlab = "Timepoints",
-              col = colorRampPalette(brewer.pal(9, "RdYlBu"))(500),
+              xlab = "Timepoints", main = "Chicken immune gene log fold change", 
+              col = colorRampPalette(brewer.pal(9, "RdYlGn"))(500),
               hExp = 2.3)
 dev.off()
 
-heatmap_path <- "figures/heatmaps/chicken_immune_genes_logfc_filt_heatmap2_key.pdf"
-pdf(heatmap_path, width = 30, height = 20)
-heatmap.2(as.matrix(chicken_immune_gene_logfc_df_filt), Colv = FALSE,
-          dendrogram = "row",
-          xlab = "Timepoints",
-          col = colorRampPalette(brewer.pal(9, "RdBu"))(500),
-          trace = "none",
-          #key = FALSE,
-          density.info = "none",
-          scale = "row")
-dev.off()
 
 
 # Eimeria GO and KEGG analysis
@@ -1173,8 +967,8 @@ eimeria_kegg_analysis <- function(topgenes_eimeria, eimeria_kegg_annotation, eim
 
 
 allkegg_eimeria_list <- lapply(topgenes_eimeria_list, 
-                             function(x) eimeria_kegg_analysis(x, eimeria_kegg_annotation, eimeria_kegg_cats,
-                                                               gene_universe_pathways, fdr_threshold, 1))
+                               function(x) eimeria_kegg_analysis(x, eimeria_kegg_annotation, eimeria_kegg_cats,
+                                                                 gene_universe_pathways, fdr_threshold, 1))
 
 # Export the top 50 most significantly enriched GO categories and KEGG pathways
 
@@ -1199,7 +993,7 @@ immune_related_eimeria_gene <- "ETH_00030475"
 cat_gene_ids <- immune_related_eimeria_gene
 cat_gene_list <- lapply(topgenes_eimeria_list, function(x) x$table[match(cat_gene_ids, x$table$locus_tag),])
 cat_gene_list <- lapply(cat_gene_list, function(x) {colnames(x) <- c("entrez_gene_id", "gene_name", "logFC", "logCPM", "F", "PValue", "FDR")
-                                   return(x)})
+return(x)})
 cat_title <- "Eimeria immune activating genes"
 cat_plot_path <- "figures/expression_line_plots/eimeria_immune_activating_genes.png"
 
@@ -1228,22 +1022,18 @@ immune_related_kegg_eimeria_list <- lapply(allkegg_eimeria_list, function(x) x[m
 
 # Make a line plot of the percentage of Eimeria reads at different time points
 
-eimeria_perc_df <- data.frame(eimeria_perc_avg = c(0.5169, 1.2126, 0.586, 1.744566667, 5.391266667, 2.809),
-                              timepoints = c(2, 4, 12, 24, 48, 72),
-                              eimeria_perc_1 = c(0.4993, 1.8494, 0.573, 2.3565, 5.5871, 2.4569),
-                              eimeria_perc_2 = c(0.466, 0.6958, 0.5766, 1.5509, 5.936, 3.1254),
-                              eimeria_perc_3 = c(0.5854, 1.0926, 0.6084, 1.3263, 4.6507, 2.8447))
+eimeria_perc_df <- data.frame(eimeria_perc = c(0.5169, 1.2126, 0.586, 1.744566667, 5.391266667, 2.809),
+                              timepoints = c(2, 4, 12, 24, 48, 72))
 
 
 png("figures/eimeria_sample_fraction.png", width = 1200, height = 800)
-p <- ggplot(eimeria_perc_df, aes(x = timepoints, y = eimeria_perc_avg)) +
-  geom_line(size = 1.5, alpha = 0.5) +
-  geom_point(aes(x = timepoints, y = eimeria_perc_1), size = 5) +
-  geom_point(aes(x = timepoints, y = eimeria_perc_2), size = 5) +
-  geom_point(aes(x = timepoints, y = eimeria_perc_3), size = 5) +
-  coord_cartesian(xlim = c(0, 80), ylim = c(0.2, 5.8)) +
+p <- ggplot(eimeria_perc_df, aes(x = timepoints, y = eimeria_perc)) +
+  geom_line(size = 1.5) +
+  geom_point(size = 5) +
+  coord_cartesian(xlim = c(0, 80), ylim = c(0.2, 5.4)) +
   scale_x_discrete(limits=eimeria_perc_df$timepoints) +
   theme_bw() +
+  ggtitle(expression(paste(italic("E. tenella"), " average sample fraction"))) +
   theme(plot.title = element_text(hjust = 0.5, size = 40),
         axis.text = element_text(size = 30),
         axis.title = element_text(size = 30)) +
@@ -1253,209 +1043,23 @@ dev.off()
 
 # Analyze Eimeria SAG genes
 
-plot_list = list()
 eimeria_product_df <- read.delim("data/reference_genomes/eimeria_gene_products.csv",
                                  col.names = c("gene_name", "entrez_gene_id", "product"), stringsAsFactors = FALSE)
 eimeria_SAG_genes <- eimeria_product_df[grep("sag", eimeria_product_df$product),]
 eimeria_SAG_genes <- eimeria_SAG_genes[eimeria_SAG_genes$entrez_gene_id %in% topgenes_eimeria_list[[1]]$table$entrez_gene_id,]
-i <- 0
-while (i < dim(eimeria_SAG_genes)[1]) {
-  i <- i + 1
-  if (substr(eimeria_SAG_genes$product[i], 24, 24) == ")") {
-    eimeria_SAG_genes$product[i] <- substr(eimeria_SAG_genes$product[i], 20, 23)
-  } else {
-    eimeria_SAG_genes$product[i] <- substr(eimeria_SAG_genes$product[i], 20, 24)
-  }
-}
 eimeria_SAG_gene_ids <- eimeria_SAG_genes$entrez_gene_id
 
 SAG_gene_list <- lapply(topgenes_eimeria_list, function(x) x$table[match(eimeria_SAG_gene_ids, x$table$entrez_gene_id),])
 SAG_gene_list <- lapply(SAG_gene_list, function(x) {colnames(x) <- c("entrez_gene_id", "gene_name", "logFC", "logCPM", "F", "PValue", "FDR")
-                                                    return(x)})
+return(x)})
 SAG_gene_list <- lapply(SAG_gene_list, function(x) {x$gene_name <- eimeria_SAG_genes$product
-                                                    return(x)})
+return(x)})
 
 SAG_title <- expression(paste(italic("E. tenella"), " SAG gene expression"))
 SAG_plot_path <- "figures/expression_line_plots/SAG_genes.png"
-p <- plot_de_cat_genes(SAG_gene_list, c(2,4,12,24,48,72), SAG_title, fdr_thresh = fdr_threshold, 
+plot_de_cat_genes(SAG_gene_list, c(2,4,12,24,48,72), SAG_title, fdr_thresh = fdr_threshold, 
                   logfc_thresh = logfc_threshold, num_samples_fdr_thresh = 1, num_samples_logfc_thresh = 1,
                   SAG_plot_path, plot_scale = c(-12.5,12.5))
-
-SAG_plot_path <- "figures/expression_line_plots/SAG_genes.pdf"
-pdf(SAG_plot_path, height = 8, width = 12)
-p
-dev.off()
-
-plot_list[[1]] <- p
-
-# Analyze E. tenella ROPK genes
-
-eimeria_ROPK_ids <- read.delim("ropk_genes_eimeria.csv", sep = ",", stringsAsFactors = FALSE)
-eimeria_full_ROPK <- as.data.frame(matrix(0, 
-                                        ncol = ncol(eimeria_ROPK_ids), 
-                                        nrow = nrow(eimeria_ROPK_ids)))
-colnames(eimeria_full_ROPK) <- c("gene_name", "gene_id")
-
-i <- 0
-j <- 1
-len_eimeria_ROPK <- dim(eimeria_ROPK_ids)[1]
-while (i < len_eimeria_ROPK) {
-  ROPK_gene_ids <- strsplit(eimeria_ROPK_ids$Eimeria_tenella[i+1], " ")[[1]]
-  k <- 1
-  len_ROPK_gene_ids <- length(ROPK_gene_ids)
-  while (k <= len_ROPK_gene_ids) {
-    ROPK_gene_name <- paste(eimeria_ROPK_ids$Subfamily[i+1], "_", k, sep = "")
-    eimeria_full_ROPK[j,1] <- ROPK_gene_name
-    eimeria_full_ROPK[j,2] <- ROPK_gene_ids[k]
-    k <- k + 1
-    j <- j + 1
-  }
-  i <- i + 1
-}
-
-eimeria_ROPK_genes <- eimeria_product_df[eimeria_product_df$gene_name %in% eimeria_full_ROPK$gene_id,]
-m <- match(eimeria_ROPK_genes$gene_name, eimeria_full_ROPK$gene_id)
-eimeria_ROPK_genes$product <- eimeria_full_ROPK$gene_name[m]
-eimeria_ROPK_genes <- eimeria_ROPK_genes[eimeria_ROPK_genes$entrez_gene_id %in% topgenes_eimeria_list[[1]]$table$entrez_gene_id,]
-
-eimeria_ROPK_gene_ids <- eimeria_ROPK_genes$entrez_gene_id
-
-ROPK_gene_list <- lapply(topgenes_eimeria_list, function(x) x$table[match(eimeria_ROPK_gene_ids, x$table$entrez_gene_id),])
-ROPK_gene_list <- lapply(ROPK_gene_list, function(x) {colnames(x) <- c("entrez_gene_id", "gene_name", "logFC", "logCPM", "F", "PValue", "FDR")
-return(x)})
-ROPK_gene_list <- lapply(ROPK_gene_list, function(x) {x$gene_name <- eimeria_ROPK_genes$product
-return(x)})
-
-ROPK_title <- expression(paste(italic("E. tenella"), " ROPK gene expression"))
-ROPK_plot_path <- "figures/expression_line_plots/ROPK_genes.png"
-p <- plot_de_cat_genes(ROPK_gene_list, c(2,4,12,24,48,72), ROPK_title, fdr_thresh = fdr_threshold, 
-                       logfc_thresh = logfc_threshold, num_samples_fdr_thresh = 1, num_samples_logfc_thresh = 1,
-                       ROPK_plot_path, plot_scale = c(-12.5,15))
-
-ROPK_plot_path <- "figures/expression_line_plots/ROPK_genes.pdf"
-pdf(ROPK_plot_path, height = 8, width = 12)
-p
-dev.off()
-
-plot_list[[2]] <- p
-
-line_multiplot_path <- "figures/expression_line_plots/SAG_ROPK_multiplot.pdf"
-pdf(line_multiplot_path, height = 16, width = 12)
-multiplot(plotlist = plot_list, layout = matrix(c(1,2), nrow = 2, byrow = TRUE))
-dev.off()
-
-# Analyze E. tenella GRA genes
-
-plot_list = list()
-eimeria_GRA_ids <- read.delim("E_tenella_GRA_genes.csv", sep = ",", stringsAsFactors = FALSE)
-
-eimeria_GRA_genes <- eimeria_product_df[eimeria_product_df$gene_name %in% eimeria_GRA_ids$gene_id,]
-m <- match(eimeria_GRA_genes$gene_name, eimeria_GRA_ids$gene_id)
-eimeria_GRA_genes$product <- eimeria_GRA_ids$gene_symbol[m]
-eimeria_GRA_genes <- eimeria_GRA_genes[eimeria_GRA_genes$entrez_gene_id %in% topgenes_eimeria_list[[1]]$table$entrez_gene_id,]
-
-eimeria_GRA_gene_ids <- eimeria_GRA_genes$entrez_gene_id
-
-GRA_gene_list <- lapply(topgenes_eimeria_list, function(x) x$table[match(eimeria_GRA_gene_ids, x$table$entrez_gene_id),])
-GRA_gene_list <- lapply(GRA_gene_list, function(x) {colnames(x) <- c("entrez_gene_id", "gene_name", "logFC", "logCPM", "F", "PValue", "FDR")
-return(x)})
-GRA_gene_list <- lapply(GRA_gene_list, function(x) {x$gene_name <- eimeria_GRA_genes$product
-return(x)})
-
-GRA_title <- expression(paste(italic("E. tenella"), " GRA gene expression"))
-GRA_plot_path <- "figures/expression_line_plots/GRA_genes.png"
-p <- plot_de_cat_genes(GRA_gene_list, c(2,4,12,24,48,72), GRA_title, fdr_thresh = fdr_threshold, 
-                       logfc_thresh = logfc_threshold, num_samples_fdr_thresh = 1, num_samples_logfc_thresh = 1,
-                       GRA_plot_path, plot_scale = c(-12.5,12.5))
-
-GRA_plot_path <- "figures/expression_line_plots/GRA_genes.pdf"
-pdf(GRA_plot_path, height = 8, width = 12)
-p
-dev.off()
-
-plot_list[[1]] <- p
-
-# Analyze E. tenella MIC genes
-
-eimeria_MIC_ids <- read.delim("E_tenella_MIC_genes.csv", sep = ",", stringsAsFactors = FALSE)
-
-eimeria_MIC_genes <- eimeria_product_df[eimeria_product_df$gene_name %in% eimeria_MIC_ids$gene_id,]
-m <- match(eimeria_MIC_genes$gene_name, eimeria_MIC_ids$gene_id)
-eimeria_MIC_genes$product <- eimeria_MIC_ids$gene_symbol[m]
-eimeria_MIC_genes <- eimeria_MIC_genes[eimeria_MIC_genes$entrez_gene_id %in% topgenes_eimeria_list[[1]]$table$entrez_gene_id,]
-
-eimeria_MIC_gene_ids <- eimeria_MIC_genes$entrez_gene_id
-
-MIC_gene_list <- lapply(topgenes_eimeria_list, function(x) x$table[match(eimeria_MIC_gene_ids, x$table$entrez_gene_id),])
-MIC_gene_list <- lapply(MIC_gene_list, function(x) {colnames(x) <- c("entrez_gene_id", "gene_name", "logFC", "logCPM", "F", "PValue", "FDR")
-return(x)})
-MIC_gene_list <- lapply(MIC_gene_list, function(x) {x$gene_name <- eimeria_MIC_genes$product
-return(x)})
-
-MIC_title <- expression(paste(italic("E. tenella"), " MIC gene expression"))
-MIC_plot_path <- "figures/expression_line_plots/MIC_genes.png"
-p <- plot_de_cat_genes(MIC_gene_list, c(2,4,12,24,48,72), MIC_title, fdr_thresh = fdr_threshold, 
-                       logfc_thresh = logfc_threshold, num_samples_fdr_thresh = 1, num_samples_logfc_thresh = 1,
-                       MIC_plot_path, plot_scale = c(-12.5,12.5))
-
-MIC_plot_path <- "figures/expression_line_plots/MIC_genes.pdf"
-pdf(MIC_plot_path, height = 8, width = 12)
-p
-dev.off()
-
-plot_list[[2]] <- p
-
-line_multiplot_path <- "figures/expression_line_plots/GRA_MIC_multiplot.pdf"
-pdf(line_multiplot_path, height = 16, width = 12)
-multiplot(plotlist = plot_list, layout = matrix(c(1,2), nrow = 2, byrow = TRUE))
-dev.off()
-
-# Eimeria spliceosome genes
-m <- match(eimeria_kegg_annotation[eimeria_kegg_annotation[,3] == "Spliceosome",1], topgenes_eimeria_list[[1]]$table[,1])
-eimeria_splice_ids <- topgenes_eimeria_list[[1]]$table[m,2]
-eimeria_splice_counts <- eimeria_cpm[eimeria_splice_ids,]
-
-m <- match(eimeria_full_go[eimeria_full_go[,5] == "dephosphorylation",1], topgenes_eimeria_list[[1]]$table[,2])
-eimeria_dephos_ids <- topgenes_eimeria_list[[1]]$table[m,2]
-eimeria_dephos_counts <- eimeria_cpm[eimeria_dephos_ids,]
-
-m <- match(eimeria_full_go[eimeria_full_go[,5] == "mRNA splicing, via spliceosome",1], topgenes_eimeria_list[[1]]$table[,2])
-eimeria_mrna_splice_ids <- topgenes_eimeria_list[[1]]$table[m,2]
-eimeria_mrna_splice_counts <- eimeria_cpm[eimeria_mrna_splice_ids,]
-
-# Chicken lysosome and phagosome genes
-lysosome_gene_list <- get_de_kegg_cat_genes(topgenes_chicken_list,"gga", "path:gga04142", egSYMBOL)
-lysosome_filt_gene_df <- lysosome_gene_list[[4]][lysosome_gene_list[[4]]$entrez_gene_id %in% logfc_filt_de_genes_chicken$entrez_gene_id,]
-write.csv(lysosome_filt_gene_df, file = "lysosome_significant_genes.csv")
-
-phagosome_gene_list <- get_de_kegg_cat_genes(topgenes_chicken_list,"gga", "path:gga04145", egSYMBOL)
-phagosome_filt_gene_df <- phagosome_gene_list[[4]][phagosome_gene_list[[4]]$entrez_gene_id %in% logfc_filt_de_genes_chicken$entrez_gene_id,]
-write.csv(phagosome_filt_gene_df, file = "phagosome_significant_genes.csv")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1464,220 +1068,6 @@ write.csv(phagosome_filt_gene_df, file = "phagosome_significant_genes.csv")
 # WGCNA analysis of the results
 # Analysis adapted from the WGCNA tutorial
 
-options(stringsAsFactors = FALSE)
-
-chicken_expr <- t(cpm(chicken_dgelist_filt_norm))
-
-gsg = goodSamplesGenes(chicken_expr, verbose = 3)
-gsg$allOK
-
-if (!gsg$allOK) {
-  # Optionally, print the gene and sample names that were removed:
-  if (sum(!gsg$goodGenes)>0) 
-    printFlush(paste("Removing genes:", paste(names(datExpr0)[!gsg$goodGenes], collapse = ", ")))
-  if (sum(!gsg$goodSamples)>0) 
-    printFlush(paste("Removing samples:", paste(rownames(datExpr0)[!gsg$goodSamples], collapse = ", ")))
-  # Remove the offending genes and samples from the data:
-  datExpr0 = datExpr0[gsg$goodSamples, gsg$goodGenes]
-}
-
-sampleTree = hclust(dist(chicken_expr), method = "average")
-# Plot the sample tree: Open a graphic output window of size 12 by 9 inches
-# The user should change the dimensions if the window is too large or too small.
-sizeGrWindow(12,9)
-#pdf(file = "Plots/sampleClustering.pdf", width = 12, height = 9)
-par(cex = 0.6)
-par(mar = c(0,4,2,0))
-plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5, 
-     cex.axis = 1.5, cex.main = 2)
-
-# Plot a line to show the cut
-abline(h = 50000, col = "red")
-# Determine cluster under the line
-clust = cutreeStatic(sampleTree, cutHeight = 50000, minSize = 10)
-table(clust)
-# clust 1 contains the samples we want to keep.
-keepSamples = (clust==1)
-chicken_expr_cut = chicken_expr[keepSamples, ]
-nGenes = ncol(chicken_expr_cut)
-nSamples = nrow(chicken_expr_cut)
-
-chicken_expr_trait <- chicken_annotation[-38,2:3]
-i <- 0
-while (i < length(chicken_expr_trait$Infection_status)) {
-  i <- i + 1
-  if (chicken_expr_trait$Infection_status[i] == "Infected") {
-    chicken_expr_trait$Infection_status[i] = 1
-  } else {
-    chicken_expr_trait$Infection_status[i] = 0
-  }
-}
-
-# Choose a set of soft-thresholding powers
-powers = c(c(1:9), seq(from = 10, to=100, by=10))
-# Call the network topology analysis function
-sft = pickSoftThreshold(chicken_expr_cut, powerVector = powers, verbose = 5)
-# Plot the results:
-sizeGrWindow(9, 5)
-par(mfrow = c(1,2))
-cex1 = 0.9
-# Scale-free topology fit index as a function of the soft-thresholding power
-plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
-     xlab="Soft Threshold (power)",ylab="Scale Free Topology Model Fit,signed R^2",type="n",
-     main = paste("Scale independence"))
-text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
-     labels=powers,cex=cex1,col="red")
-# this line corresponds to using an R^2 cut-off of h
-abline(h=0.70,col="red")
-abline(h=0.90,col="red")
-# Mean connectivity as a function of the soft-thresholding power
-plot(sft$fitIndices[,1], sft$fitIndices[,5],
-     xlab="Soft Threshold (power)",ylab="Mean Connectivity", type="n",
-     main = paste("Mean connectivity"))
-text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
-
-
-#net6 = blockwiseModules(chicken_expr_cut, power = 6,
-#                       TOMType = "unsigned", minModuleSize = 30,
-#                       reassignThreshold = 0, mergeCutHeight = 0.25,
-#                       numericLabels = TRUE, pamRespectsDendro = FALSE,
-#                       saveTOMs = TRUE,
-#                       saveTOMFileBase = "chickenTOM6", 
-#                       verbose = 3,
-#                       maxBlockSize = 14000)
-
-#net30 = blockwiseModules(chicken_expr_cut, power = 30,
-#                        TOMType = "unsigned", minModuleSize = 30,
-#                        reassignThreshold = 0, mergeCutHeight = 0.25,
-#                        numericLabels = TRUE, pamRespectsDendro = FALSE,
-#                        saveTOMs = TRUE,
-#                        saveTOMFileBase = "chickenTOM30", 
-#                        verbose = 3,
-#                        maxBlockSize = 14000)
-
-table(net6$colors)
-table(net30$colors)
-
-# open a graphics window
-sizeGrWindow(12, 9)
-# Convert labels to colors for plotting
-mergedColors = labels2colors(net6$colors)
-# Plot the dendrogram and the module colors underneath
-plotDendroAndColors(net6$dendrograms[[1]], mergedColors[net6$blockGenes[[1]]],
-                    "Module colors",
-                    dendroLabels = FALSE, hang = 0.03,
-                    addGuide = TRUE, guideHang = 0.05)
-
-moduleLabels = net6$colors
-moduleColors = labels2colors(net6$colors)
-MEs = net6$MEs
-geneTree = net6$dendrograms[[1]]
-save(MEs, moduleLabels, moduleColors, geneTree, 
-     file = "chickenR6-networkConstruction-auto.RData")
-
-# Define numbers of genes and samples
-nGenes = ncol(chicken_expr_cut)
-nSamples = nrow(chicken_expr_cut)
-# Recalculate MEs with color labels
-MEs0 = moduleEigengenes(chicken_expr_cut, moduleColors)$eigengenes
-MEs = orderMEs(MEs0)
-moduleTraitCor = cor(MEs, chicken_expr_trait, use = "p")
-moduleTraitPvalue = corPvalueStudent(moduleTraitCor, nSamples)
-
-sizeGrWindow(10,6)
-# Will display correlations and their p-values
-textMatrix =  paste(signif(moduleTraitCor, 2), "\n(",
-                    signif(moduleTraitPvalue, 1), ")", sep = "");
-dim(textMatrix) = dim(moduleTraitCor)
-par(mar = c(6, 8.5, 3, 3));
-# Display the correlation values within a heatmap plot
-labeledHeatmap(Matrix = moduleTraitCor,
-               xLabels = names(chicken_expr_trait),
-               yLabels = names(MEs),
-               ySymbols = names(MEs),
-               colorLabels = FALSE,
-               colors = blueWhiteRed(50),
-               textMatrix = textMatrix,
-               setStdMargins = FALSE,
-               cex.text = 0.5,
-               zlim = c(-1,1),
-               main = paste("Module-trait relationships"))
-
-
-# Define variable infection_status containing the Infection_status column of chicken_expr_trait
-infection_status = as.data.frame(chicken_expr_trait$Infection_status);
-names(infection_status) = "infection_status"
-
-# names (colors) of the modules
-modNames = substring(names(MEs), 3)
-
-geneModuleMembership = as.data.frame(cor(chicken_expr_cut, MEs, use = "p"));
-MMPvalue = as.data.frame(corPvalueStudent(as.matrix(geneModuleMembership), nSamples));
-
-names(geneModuleMembership) = paste("MM", modNames, sep="");
-names(MMPvalue) = paste("p.MM", modNames, sep="");
-
-geneTraitSignificance = as.data.frame(cor(chicken_expr_cut, infection_status, use = "p"));
-GSPvalue = as.data.frame(corPvalueStudent(as.matrix(geneTraitSignificance), nSamples));
-
-names(geneTraitSignificance) = paste("GS.", names(infection_status), sep="");
-names(GSPvalue) = paste("p.GS.", names(infection_status), sep="");
-
-module = "midnightblue"
-column = match(module, modNames);
-moduleGenes = moduleColors==module;
-
-sizeGrWindow(7, 7);
-par(mfrow = c(1,1));
-verboseScatterplot(abs(geneModuleMembership[moduleGenes, column]),
-                   abs(geneTraitSignificance[moduleGenes, 1]),
-                   xlab = paste("Module Membership in", module, "module"),
-                   ylab = "Gene significance for infection status",
-                   main = paste("Module membership vs. gene significance\n"),
-                   cex.main = 1.2, cex.lab = 1.2, cex.axis = 1.2, col = module)
-
-
-colnames(chicken_expr_cut)[moduleColors=="brown"]
-
-symbol2entrez = match(chicken_dgelist_filt_norm$genes$gene_name, colnames(chicken_expr_cut))
-
-# Create the starting data frame
-geneInfo0 <- data.frame(geneSymbol = colnames(chicken_expr_cut),
-                       EntrezID = chicken_dgelist_filt_norm$genes$entrez_gene_id[],
-                       moduleColor = moduleColors,
-                       geneTraitSignificance,
-                       GSPvalue)
-# Order modules by their significance for infection_status
-modOrder <- order(-abs(cor(MEs, infection_status, use = "p")));
-# Add module membership information in the chosen order
-for (mod in 1:ncol(geneModuleMembership))
-{
-  oldNames = names(geneInfo0)
-  geneInfo0 = data.frame(geneInfo0, geneModuleMembership[, modOrder[mod]], 
-                         MMPvalue[, modOrder[mod]]);
-  names(geneInfo0) = c(oldNames, paste("MM.", modNames[modOrder[mod]], sep=""),
-                       paste("p.MM.", modNames[modOrder[mod]], sep=""))
-}
-# Order the genes in the geneInfo variable first by module color, then by geneTraitSignificance
-geneOrder = order(geneInfo0$moduleColor, -abs(geneInfo0$GS.infection_status));
-geneInfo = geneInfo0[geneOrder, ]
-
-write.csv(geneInfo, file = "geneInfo.csv")
-
-
-
-# Get the corresponding Locuis Link IDs
-allLLIDs <- geneInfo$EntrezID
-
-GOenr = GOenrichmentAnalysis(moduleColors, allLLIDs, organism = "chicken", nBestP = 10)
-
-tab = GOenr$bestPTerms[[4]]$enrichment
-
-
-  
-
-  
-  
 # Analysis of a fusion of Eimeria and chicken data
 
 options(stringsAsFactors = FALSE)
@@ -1773,13 +1163,13 @@ text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
 
 
 net9 <- blockwiseModules(fusion_expr_cut, power = 9,
-                        TOMType = "unsigned", minModuleSize = 30,
-                        reassignThreshold = 0, mergeCutHeight = 0.25,
-                        numericLabels = TRUE, pamRespectsDendro = FALSE,
-                        saveTOMs = TRUE,
-                        saveTOMFileBase = "fusionTOM9", 
-                        verbose = 3,
-                        maxBlockSize = 21000)
+                         TOMType = "unsigned", minModuleSize = 30,
+                         reassignThreshold = 0, mergeCutHeight = 0.25,
+                         numericLabels = TRUE, pamRespectsDendro = FALSE,
+                         saveTOMs = TRUE,
+                         saveTOMFileBase = "fusionTOM9", 
+                         verbose = 3,
+                         maxBlockSize = 21000)
 
 #net18 = blockwiseModules(fusion_expr_cut, power = 18,
 #                        TOMType = "unsigned", minModuleSize = 30,

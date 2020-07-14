@@ -69,3 +69,23 @@ geneInfo_fusion_annotated.csv
 .~lock.immune_classified_genes.csv#
 
 assembly_graph.fastg
+
+data/sample_metadata/.~lock.SH-2259_metadata.tsv#
+
+E_tenella_GRA_genes.csv
+
+cell_stage_translational_control_proteins.fasta
+
+e_tenella_GRA_hits.ods
+
+E_tenella_MIC_genes.csv
+
+e_tenella_MIC_hits.ods
+
+GEO_data/processed_data/
+
+lysosome_significant_genes.csv
+
+phagosome_significant_genes.csv
+
+ropk_genes_eimeria.csv

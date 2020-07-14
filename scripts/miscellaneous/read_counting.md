@@ -1,10 +1,10 @@
 # Read counting pipeline
 
-This document contains all code used for the read counting portion of the project x (I really need to find what this was). It is presented in the order of execution. Information on software used and versions can be found in the text and in the final section of the document.
+This document contains all code used for the read counting portion of the project. It is presented in the order of execution. Information on software used and versions can be found in the text and in the final section of the document.
 
 ## Trimming
 
-As was mentioned in the methods section of the report, the raw reads had been quality checked by the sequencing service, SNP&SEQ Technology Platform. Their reports were used as a basis to determine the settings required for trimming. The software used to trim the raw read data was Trimmomatic (v. 0.36). For both the *in vitro* and *in vivo* datasets, the data was of high quality but the reverse reads had a large amount of adapter content. <br>
+The raw reads had been quality checked by the sequencing service, SNP&SEQ Technology Platform. Their reports were used as a basis to determine the settings required for trimming. The software used to trim the raw read data was Trimmomatic (v. 0.36). For both the *in vitro* and *in vivo* datasets, the data was of high quality but the reverse reads had a large amount of adapter content. <br>
 As such, only a SLIDINGWINDOW:4:20 was used for quality, i.e. cutting reads anywhere Trimmomatic finds a window of 4 bases with a mean quality lower than 20, and removing reads shorter than 50 bp after trimming. The adapters used by the sequencing lab were standard Illumina adapters and were therefore included in the adapter library provided with Trimmomatic, allowing it to be used to identify and remove adapters. <br>
 The script below was used with these settings to trim the raw reads from both the *in vitro* and *in vivo* datasets:
 
@@ -31,27 +31,7 @@ do
     done
 done
 ```
-The next script was used to run the previous one on the Rackham server on Uppmax.  (Should this be here?):
 
-```bash
-#!/bin/bash -l
-
-#SBATCH -A snic2020-15-16
-#SBATCH -p core
-#SBATCH -n 8
-#SBATCH -t 48:00:00
-#SBATCH -J trimmomatic_run
-#SBATCH --mail-type=ALL
-
-module load bioinfo-tools
-module load trimmomatic
-
-# Your commands
-bash scripts/trimmomatic/trimmomatic_run.sh data/in_vitro_pilot/161012_D00457_0163_AC9TWTANXX/Sample_*
-bash scripts/trimmomatic/trimmomatic_run.sh data/in_vitro_complementary/170830_D00457_0216_ACB7DNANXX/Sample_*
-bash scripts/trimmomatic/trimmomatic_run.sh data/SH-2259/191210_A00605_0093_BHNFNHDSXX/Sample_SH-2259-*
-bash scripts/trimmomatic/trimmomatic_run.sh data/SI-2311/191105_A00605_0082_AHGV3LDRXX/Sample_SI-2311-*
-```
 _____________________________
 
 ## Quality checking
@@ -69,29 +49,6 @@ do
     fastqc -o results/fastqc/${GROUP_NAME} ${FILE_PATH}/*.fastq.gz
     multiqc -o results/fastqc/${GROUP_NAME} results/fastqc/${GROUP_NAME}
 done
-```
-
-The next script was used to run the previous one on Rackham:
-
-```bash
-#!/bin/bash -l
-
-#SBATCH -A snic2020-15-16
-#SBATCH -p core
-#SBATCH -n 1
-#SBATCH -t 48:00:00
-#SBATCH -J fastqc_run
-#SBATCH --mail-type=ALL
-
-module load bioinfo-tools
-module load FastQC/0.11.8
-module load MultiQC/1.8
-
-# Your commands
-bash scripts/fastqc/fastqc_run.sh results/trimmomatic/in_vitro_pilot
-bash scripts/fastqc/fastqc_run.sh results/trimmomatic/in_vitro_complementary
-bash scripts/fastqc/fastqc_run.sh results/trimmomatic/SH-2259
-bash scripts/fastqc/fastqc_run.sh results/trimmomatic/SI-2311
 ```
 
 ___________________________
@@ -123,25 +80,6 @@ STAR --runMode genomeGenerate --genomeDir results/star/index --genomeFastaFiles 
 	--sjdbGTFtagExonParentGene gene --runThreadN 8 --sjdbGTFfile ${2} --sjdbOverhang 150 --genomeChrBinNbits 18
 ```
 
-This was run on Rackham using the following settings:
-
-```bash
-#!/bin/bash -l
-
-#SBATCH -A snic2020-15-16
-#SBATCH -p core
-#SBATCH -n 8
-#SBATCH -t 1:00:00
-#SBATCH -J star_index
-#SBATCH --mail-type=ALL
-
-module load bioinfo-tools
-module load star/2.7.2b
-
-# Your commands
-bash scripts/star/star_index.sh results/star/merged_reference/eimeria_chicken_merge.fna results/star/merged_reference/eimeria_chicken_merge.gff
-```
-
 Finally, the mapping was run on all trimmed reads using the following script:
 
 ```bash
@@ -163,25 +101,6 @@ do
 done
 ```
 
-As this step was computationally intensive, it was run in parallel for the different datasets on Rackham.  Here is one of the four files used to run the previous script:
-
-```bash
-#!/bin/bash -l
-
-#SBATCH -A snic2020-15-16
-#SBATCH -p core
-#SBATCH -n 8
-#SBATCH -t 48:00:00
-#SBATCH -J star_run_comp
-#SBATCH --mail-type=ALL
-
-module load bioinfo-tools
-module load star/2.7.2b
-
-# Your commands
-bash scripts/star/star_run.sh results/trimmomatic/in_vitro_complementary
-```
-
 __________________________________
 
 ## Read counting
@@ -201,25 +120,6 @@ do
     htseq-count -f bam -r pos -s reverse ${f}_Aligned.sortedByCoord.out.bam results/star/merged_reference/eimeria_chicken_merge_gene_id.gtf \
         > results/htseq/reverse/${GROUP_NAME}/${OUTPUT_NAME}_reverse.counts
 done
-```
-
-As with the mapping, the read counting was a time consuming process and therefore HTSeq was run in parallel for the different datasets.  Here is an example of the command used to run it on Rackham:
-
-```bash
-#!/bin/bash -l
-
-#SBATCH -A snic2020-15-16
-#SBATCH -p core
-#SBATCH -n 2
-#SBATCH -t 48:00:00
-#SBATCH -J htseq_run_rev_comp
-#SBATCH --mail-type=ALL
-
-module load bioinfo-tools
-module load htseq/0.9.1
-
-# Your commands
-bash scripts/htseq/htseq_rev_run.sh results/star/mapped_reads/in_vitro_complementary
 ```
 ______________________
 
@@ -298,8 +198,6 @@ data_table = pd.DataFrame(result_list, columns=header_list)
 out_table = pd.merge(metadata_table, data_table, on = "File_name")
 out_table.to_csv(output_path+"/metadata_table.csv", sep = ",", index = False)
 ```
-
-(Could talk about the bash commands used to generate the lists of gene identifiers with annotation information)
 
 The next step was to concatenate the read counts from different samples to produce a single file containing all the read counts for each species and experiment.  The data from the two *in vitro* experiments was combined as the analysis was meant to be conducted on both together.  The gene identifiers also needed to be replaced with Entrez gene identifiers and locus tags to facilitate the use of certain packages in the downstream analysis.
 
@@ -400,14 +298,12 @@ ____________________________________
 
 ## Software source and versions
 
-Trimmomatic
+Trimmomatic v. 0.36
 
-FastQC
+FastQC v. 0.11.8
 
-MultiQC
+MultiQC v. 1.8
 
-STAR
+STAR v. 2.7.2b
 
-HTSeq
-
-Pandas (?)
+HTSeq v. 0.9.1
