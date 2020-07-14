@@ -18,4 +18,4 @@ module load trimmomatic
 #bash scripts/trimmomatic/trimmomatic_run.sh data/SI-2311/191105_A00605_0082_AHGV3LDRXX/Sample_SI-2311-*
 #bash scripts/trimmomatic/trimmomatic_run.sh data/TC-2482/200507_A00181_0173_BHLVH3DRXX/Sample_TC-2482-*
 #bash scripts/trimmomatic/trimmomatic_run.sh data/TC-2483/200409_A00605_0120_BH527GDSXY/Sample_TC-2483-*
-bash scripts/trimmomatic/trimmomatic_run.sh data/TC-2483/200529_A00181_0179_AH73V5DSXY/Sample_TC-2484-*
+bash scripts/trimmomatic/trimmomatic_run.sh data/TC-2484/200529_A00181_0179_AH73V5DSXY/Sample_TC-2484-*
