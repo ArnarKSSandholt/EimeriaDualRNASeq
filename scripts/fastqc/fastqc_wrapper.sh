@@ -17,6 +17,6 @@ module load MultiQC/1.8
 #bash scripts/fastqc/fastqc_run.sh results/trimmomatic/in_vitro_complementary
 #bash scripts/fastqc/fastqc_run.sh results/trimmomatic/SH-2259
 #bash scripts/fastqc/fastqc_run.sh results/trimmomatic/SI-2311
-bash scripts/fastqc/fastqc_run.sh results/trimmomatic/TC-2482
-bash scripts/fastqc/fastqc_run.sh results/trimmomatic/TC-2483
+#bash scripts/fastqc/fastqc_run.sh results/trimmomatic/TC-2482
+#bash scripts/fastqc/fastqc_run.sh results/trimmomatic/TC-2483
 bash scripts/fastqc/fastqc_run.sh results/trimmomatic/TC-2484
