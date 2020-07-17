@@ -34,14 +34,14 @@ chicken_annotation <- annotation[!eimeria_sample,]
 chicken_reads$`33_S29` <- NULL
 rownames(chicken_annotation) <- chicken_annotation$File_name
 
-# Define the grouping for the chicken and Eimeria samples.  For the chicken, each timepoint and infection status 
+# Define the grouping for the chicken and Eimeria samples.  For the chicken, each time point and infection status 
 # is its own group while only time is a factor for the Eimeria samples
 group_chicken <- factor(paste(substr(chicken_annotation[colnames(chicken_reads)[-c(1,2)],"Infection_status"],1,1),
                               chicken_annotation[colnames(chicken_reads)[-c(1,2)],"Timepoint_hours"],
                               sep="."))
 group_eimeria <- factor(eimeria_annotation[colnames(eimeria_reads)[-c(1,2)],"Timepoint_hours"])
 
-# Run a PCA on the data to identify, examine and deali with outliers and other potential issues
+# Run a PCA on the data to identify, examine and deal with outliers and other potential issues
 chicken_cpm_raw <- cpm(chicken_reads[,-c(1,2)])
 eimeria_cpm_raw <- cpm(eimeria_reads[,-c(1,2)])
 
